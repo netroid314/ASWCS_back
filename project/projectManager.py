@@ -6,12 +6,13 @@ INPROGRESS = 1
 DONE = 2
 
 SECOND = 1000
+MINUTE = 60 * 1000
 
 class projectManager:
     def __init__(self):
         self.id = 0
         self.finished = False
-        self.time_threshold = 10*SECOND
+        self.time_threshold = 10*MINUTE
 
         self.result_gradient = np.array()
         self.step_gradient = np.array()
