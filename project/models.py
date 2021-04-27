@@ -14,6 +14,7 @@ class Project (models.Model):
     rrs_url=models.TextField()
     model_url=models.TextField()
     max_contributor=models.IntegerField()
+    status=models.CharField(max_length=10)
     created_at = models.DateTimeField('created_at')
     started_at=models.DateTimeField('started_at')
     finished_at=models.DateTimeField('finished_at')
@@ -32,6 +33,7 @@ class Task (models.Model):
     tasker=models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     project=models.ForeignKey(Project, on_delete=models.CASCADE)
     credit=models.IntegerField()
+    status=models.CharField(max_length=10)
     started_at=models.DateTimeField('started_at')
     finished_at=models.DateTimeField('finished_at')
 
