@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractBaseUser,BaseUserManager,Permissi
 from django.db import models 
 from django.utils import timezone
 from uuid import uuid4
+from bson.objectid import ObjectId
+
 
 class UserManager(BaseUserManager):    
     
@@ -30,18 +32,30 @@ class User(AbstractBaseUser,PermissionsMixin):
     
     objects = UserManager()
     
+    user_SN=models.CharField(
+        max_length=200,
+        default=str(ObjectId()),
+        editable=False,
+        unique=True,
+        primary_key=True
+    )
 
     username = models.CharField(
         max_length=20,
         null=False,
         unique=True
     )
+
+    credit=models.IntegerField(
+        default=0
+    )
+
     key = models.CharField(
         max_length=200,
         default=str(uuid4()),
-        editable=False,
         unique=True
     )
+
 
     is_active = models.BooleanField(default=True)    
     is_admin = models.BooleanField(default=False)    
@@ -50,6 +64,13 @@ class User(AbstractBaseUser,PermissionsMixin):
     date_joined = models.DateTimeField(default=timezone.now())     
     USERNAME_FIELD = 'username'    
 
+
+class CreditLog(models.Model):
+    user=models.ForeignKey(User, on_delete=models.CASCADE)
+    action=models.CharField(max_length=10)
+    details=models.TextField()
+    amount=models.IntegerField()
+    date=models.DateTimeField(default=timezone.now())
 
 
 
