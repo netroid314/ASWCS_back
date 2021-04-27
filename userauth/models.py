@@ -28,6 +28,8 @@ class UserManager(BaseUserManager):
         user.is_staff = True        
         user.save(using=self._db)        
         return user 
+
+        
 class User(AbstractBaseUser,PermissionsMixin):    
     
     objects = UserManager()
@@ -64,13 +66,6 @@ class User(AbstractBaseUser,PermissionsMixin):
     date_joined = models.DateTimeField(default=timezone.now())     
     USERNAME_FIELD = 'username'    
 
-
-class CreditLog(models.Model):
-    user=models.ForeignKey(User, on_delete=models.CASCADE)
-    action=models.CharField(max_length=10)
-    details=models.TextField()
-    amount=models.IntegerField()
-    date=models.DateTimeField(default=timezone.now())
 
 
 

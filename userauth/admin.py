@@ -21,20 +21,10 @@ class UserAdmin_2(UserAdmin):
         (None, {'fields': ('username', 'password', 'date_joined')})
     ]
 
-class CreditLogAdmin(admin.ModelAdmin):
-    model=CreditLog
-
-    list_display=(
-        'user',
-        'action',
-        'amount',
-        'date'
-    )
-
 
 
 # admin.site.register(User)
 
 admin.site.register(user,UserAdmin_2)
-admin.site.register(CreditLog,CreditLogAdmin)
+
 # Register your models here.

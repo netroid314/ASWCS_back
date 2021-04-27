@@ -13,14 +13,14 @@ def create_project(request):
         })
 
     key = request.META.get("HTTP_AUTH")['key']
-    user=User.objects.get(key=key)
-
-    if user==None:
+    if User.objects.filter(key==key).exists()==False:
         return JsonResponse({
             "is_successful":False,
             "message":"Expired key. Please Login again."
         })
-    
+
+    user=User.objects.get(key=key)
+
     project=Project.objects.create(owner=user)
     return JsonResponse({
         "is_successful":True,

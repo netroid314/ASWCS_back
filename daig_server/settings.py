@@ -34,6 +34,7 @@ AUTH_USER_MODEL='userauth.User'
 INSTALLED_APPS = [
     'userauth.apps.UserauthConfig',
     'project.apps.ProjectConfig',
+    'credit.apps.CreditConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

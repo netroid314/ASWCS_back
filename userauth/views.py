@@ -12,6 +12,12 @@ def login(request):
     username = request.POST.get('username', None)
     password = request.POST.get('password', None)
 
+    if User.objects.filter(username=username).exists()==False:
+        return JsonResponse({
+            "is_successful":False,
+            "message":"Non-existed username"
+        })
+
     myuser = User.objects.get(username=username) 
     if myuser.check_password(password):
         return JsonResponse({
@@ -43,7 +49,10 @@ def sign_up(request):
             "message":"Already existed username."
         })
     
-    User.objects.create(username=username).set_password(password)
+    user=User.objects.create(username=username)
+    user.set_password(password)
+    user.save()
+
 
     return JsonResponse({
         "is_successful":True,
