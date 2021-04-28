@@ -14,8 +14,8 @@ class projectManager:
         self.finished = False
         self.time_threshold = 10*MINUTE
 
-        self.result_gradient = np.array()
-        self.step_gradient = np.array()
+        self.result_gradient = np.array([])
+        self.step_gradient = np.array([])
 
         # task_schedule => total task schedule list
         # task_step_schedule => current step tasks schedule list

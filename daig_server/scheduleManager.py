@@ -1,4 +1,4 @@
-from ..project import projectManager
+from projectManager import projectManager
 
 STANDBY = 0
 INPROGRESS = 1
@@ -18,7 +18,7 @@ class scheduleManager:
         self.user_list = {}
         self.project_list = {}
 
-    def start_project(project_id):
+    def init_project(project_id):
         if project_id in self.project_list:
             return -1
 
@@ -27,12 +27,23 @@ class scheduleManager:
         return 0
 
     def add_user(user_id):
-        self.user_list[user_id] = STANDBY
+        self.user_list[user_id] = 0
 
-    def learn_user(user_id):
-        self.user_list[user_id] = INPROGRESS
+    def allocate_user(user_id, project_id):
+        self.user_list[user_id] = project_id
+
+
+    def update_project(project_id,task_no,gradient):
+        self.project_list[project].update_step_gradient(task_no,gradient)
 
     def get_valid_project():
         for project in self.project_list.keys():
-            if(self.project_list[project])
+            if(self.project_list[project].get_task_index()):
+                return self.project_list[project].id
+        return -1
 
+    def get_valid_task(project_id):
+        return self.project_list[project_id].get_task_index()
+
+    def get_user_allocated_project(user_id):
+        return self.user_list[user_id]
