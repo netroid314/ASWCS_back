@@ -5,14 +5,14 @@ STANDBY = 0
 INPROGRESS = 1
 DONE = 2
 
-SECOND = 1000
-MINUTE = 60 * 1000
+SECOND = 1
+MINUTE = 60
 
 class projectManager:
     def __init__(self):
         self.id = 0
         self.finished = False
-        self.time_threshold = 3*SECOND
+        self.time_threshold = 2*SECOND
 
         self.result_gradient = np.array([])
         self.step_gradient = np.array([])
@@ -77,13 +77,15 @@ class projectManager:
         return self.current_step
 
     def get_task_index(self):
+        # Later, change for loop and if statement into filter based iteration
         for i in range(0, self.task_step_size):
             if(self.task_step_schedule[i] == STANDBY):
                 return self.current_step * self.task_step_size + i
 
         for i in range(0, self.task_step_size):
-            if(self.task_time_limit_check(self.task_step_time_stamp[i])):
-                 return self.current_step * self.task_step_size + i
+            print('time check')
+            if(self.task_step_schedule[i] == INPROGRESS and self.task_time_limit_check(self.task_step_time_stamp[i])):
+                return self.current_step * self.task_step_size + i
 
         return -1
 
@@ -91,8 +93,10 @@ class projectManager:
     # Update and Perform related functions
 
     def start_task(self, task_index):
-        self.task_step_schedule[task_index] = INPROGRESS
-        self.task_step_time_stamp[task_index] = time.time()
+        if(task_index < 0):
+            return -1
+        self.task_step_schedule[task_index % self.task_step_size] = INPROGRESS
+        self.task_step_time_stamp[task_index % self.task_step_size] = time.time()
 
     def update_total_gradient(self, gradient):
         self.result_gradient += gradient
@@ -101,17 +105,17 @@ class projectManager:
 
     def update_gradient(self, step, task_number,gradient):
         if(step != self.current_step):
-            print('Not in Recent Step')
+            print('Incorrect Step')
             return -1
 
-        if(self.task_step_schedule[task_number] == DONE):
-            print('Duplicated approach at ' + str(step) + ':' + str(task_number))
+        if(self.task_step_schedule[task_number % self.task_step_size] == DONE):
+            print('Duplicated approach at ' + str(step) + ':' + str(task_number % self.task_step_size))
             return -1
 
         self.step_gradient += gradient
         self.current_step_done_count += 1
 
-        self.task_step_schedule[task_number] = DONE
+        self.task_step_schedule[task_number % self.task_step_size] = DONE
 
         if(self.is_step_done()):
             for key in self.task_step_schedule:

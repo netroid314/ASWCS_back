@@ -16,10 +16,10 @@ class ProjectManagerTests(unittest.TestCase):
 
     def update_gradient(self, step, index, gradient):
         self.project_manager.update_gradient(step, index, gradient)
+        print('time out with '+ str(step) + ':' +  str(index))
 
     def timed_update_gradient(self, step, index, gradient, timer):
         th.Timer(timer, (lambda lamda_step,lamda_index,lamda_gradient: self.update_gradient(lamda_step,lamda_index,lamda_gradient)),(step, index, gradient)).start()
-        print('time out with '+ str(step) + ':' +  str(index))
 
     def test_project_initialization(self):
         self.init()
@@ -50,7 +50,7 @@ class ProjectManagerTests(unittest.TestCase):
         self.user_3_index = self.project_manager.get_task_index()
         self.project_manager.start_task(self.user_3_index)
 
-        self.assertEqual(self.project_manager.get_task_index(), -1)
+        self.assertEqual(self.project_manager.task_step_schedule[2], 1)
 
     def schdule_simulation_without_time_variation(self):
         tmp_weight_1 = self.get_random_gradient()
@@ -69,35 +69,45 @@ class ProjectManagerTests(unittest.TestCase):
         self.assertEqual(self.project_manager.get_step(), 1)
 
     def test_schdule_simulation_multiple(self):
+        print('multi time test start')
         self.test_user_task_init()
 
         self.schdule_simulation_without_time_variation()
         self.schdule_simulation_without_time_variation()
         self.schdule_simulation_without_time_variation()
-        self.schdule_simulation_without_time_variation()        
+        self.schdule_simulation_without_time_variation()
         
         self.assertEqual(self.project_manager.is_project_finished(), True)
 
-    def test_schdule_simulation_with_time_variation(self):
+    def test_schdule_simulation_with_time_variation_case_1(self):
+        # Situation 1
+        # user 1 did job quickly, user 2 and 3 did job slowly
+        # user 1 also takes job of user 2 based on session time
+        # user 1 did first ad second task and user 3 did third task.
+        # user 2's job is abandoned
+        print('init time varied test')
         self.test_project_weight_initialization()
 
         self.user_1_index = self.project_manager.get_task_index()
         self.project_manager.start_task(self.user_1_index)
+        self.update_gradient(0, self.user_1_index, self.get_random_gradient())
 
         self.user_2_index = self.project_manager.get_task_index()
-        self.user_3_index = self.project_manager.get_task_index()
-
         self.project_manager.start_task(self.user_2_index)
-        self.project_manager.start_task(self.user_3_index)
-      
-        self.update_gradient(0, self.user_1_index, self.get_random_gradient())
-        
-        self.timed_update_gradient(0, self.user_3_index, self.get_random_gradient(),1)
-        self.timed_update_gradient(0, self.user_2_index, self.get_random_gradient(),2)
 
+        self.user_3_index = self.project_manager.get_task_index()
+        self.project_manager.start_task(self.user_3_index)
+        
+        self.timed_update_gradient(0, self.user_2_index, self.get_random_gradient(),7)
+        self.timed_update_gradient(0, self.user_3_index, self.get_random_gradient(),5)
 
         time.sleep(3)
-        self.assertEqual(self.project_manager.is_project_finished(), False)
+        self.user_1_index = self.project_manager.get_task_index()
+        self.project_manager.start_task(self.user_1_index)
+        self.timed_update_gradient(0, self.user_1_index, self.get_random_gradient(),1)
+
+        time.sleep(5)
+        self.assertEqual(self.project_manager.get_step(), 1)
         
 
 # execute unit test
