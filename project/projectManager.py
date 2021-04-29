@@ -99,17 +99,28 @@ class projectManager:
 
         return True
 
-    def update_gradient(self, task_number,gradient):
+    def update_gradient(self, step, task_number,gradient):
+        if(step != self.current_step):
+            print('Not in Recent Step')
+            return -1
+
+        if(self.task_step_schedule[task_number] == DONE):
+            print('Duplicated approach at ' + str(step) + ':' + str(task_number))
+            return -1
+
         self.step_gradient += gradient
         self.current_step_done_count += 1
 
         self.task_step_schedule[task_number] = DONE
 
         if(self.is_step_done()):
+            for key in self.task_step_schedule:
+                self.task_step_schedule[key] = STANDBY
             self.step_gradient /= self.current_step_done_count
             self.set_current_step(self.current_step + 1)
             self.update_total_gradient(self.step_gradient)
             self.step_gradient *= 0
+            self.current_step_done_count = 0
 
         return self.current_step_done_count
 
