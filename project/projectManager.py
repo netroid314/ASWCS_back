@@ -89,6 +89,13 @@ class projectManager:
 
         return -1
 
+    def get_pariticipants_number(self):
+        count = 0
+        for i in range(self.task_step_schedule):
+            if(self.task_step_schedule[i] == INPROGRESS):
+                count += 1
+        return count
+
     ##################################################################
     # Update and Perform related functions
 
