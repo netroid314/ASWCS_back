@@ -12,7 +12,7 @@ class projectManager:
     def __init__(self):
         self.id = 0
         self.finished = False
-        self.time_threshold = 10*MINUTE
+        self.time_threshold = 3*SECOND
 
         self.result_gradient = np.array([])
         self.step_gradient = np.array([])
@@ -46,26 +46,26 @@ class projectManager:
     ###################################################################
     # Setting functions
 
-    def set_total_step(total_task,step_size):
+    def set_total_step(self, total_task, step_size):
         self.task_total_count = total_task
-        self.task_step_size = step
+        self.task_step_size = step_size
 
         self.current_step = 0
         self.init_tok_step  = True
 
         for i in range(0,self.task_step_size):
-            task_step_schedule[i] = STANDBY
+            self.task_step_schedule[i] = STANDBY
 
         return self.init_tok_step
 
-    def set_gardient(initial_weight):
+    def set_gardient(self, initial_weight):
         self.result_gradient = initial_weight
         self.step_gradient = self.result_gradient - initial_weight
         self.init_tok_gradient = True
 
         return self.init_tok_gradient
 
-    def set_current_step(step):
+    def set_current_step(self, step):
         self.current_step = step
         self.current_step_done_count = 0
 
@@ -73,10 +73,10 @@ class projectManager:
     ##################################################################
     # Get functions
 
-    def get_step():
+    def get_step(self):
         return self.current_step
 
-    def get_task_index():
+    def get_task_index(self):
         for i in range(0, self.task_step_size):
             if(self.task_step_schedule[i] == STANDBY):
                 return self.current_step * self.task_step_size + i
@@ -90,16 +90,16 @@ class projectManager:
     ##################################################################
     # Update and Perform related functions
 
-    def start_task(task_index):
+    def start_task(self, task_index):
         self.task_step_schedule[task_index] = INPROGRESS
         self.task_step_time_stamp[task_index] = time.time()
 
-    def update_total_gradient(gradient):
+    def update_total_gradient(self, gradient):
         self.result_gradient += gradient
 
         return True
 
-    def update_step_gradient(task_number,gradient):
+    def update_gradient(self, task_number,gradient):
         self.step_gradient += gradient
         self.current_step_done_count += 1
 
@@ -116,14 +116,14 @@ class projectManager:
     ###################################################################
     # logical functions
 
-    def is_step_done():
+    def is_step_done(self):
         return self.current_step_done_count == self.task_step_size
 
-    def task_time_limit_check(task_time):
+    def task_time_limit_check(self, task_time):
         return (time.time() - task_time) > self.time_threshold
 
-    def is_project_finished():
-        if((self.current_step * self.task_step_size) > self.task_total_count):
+    def is_project_finished(self):
+        if((self.current_step * self.task_step_size) >= self.task_total_count):
             self.finished = True
         else:
             self.finished = False
