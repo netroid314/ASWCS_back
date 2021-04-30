@@ -1,4 +1,9 @@
-from projectManager import projectManager
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+
+
+from project.projectManager import projectManager
 
 STANDBY = 0
 INPROGRESS = 1
@@ -18,12 +23,15 @@ class scheduleManager:
         self.user_list = {}
         self.project_list = {}
 
-    def init_project(self, project_id):
+    def init_project(self, project_id, total_step, step_size, weight):
         if project_id in self.project_list:
             return -1
 
         new_project = projectManager()
         self.project_list[project_id] = new_project
+        self.project_list[project_id].set_total_step(total_step,step_size)
+        self.project_list[project_id].set_gardient(weight)
+
         return 0
 
     def add_user(self, user_id):
