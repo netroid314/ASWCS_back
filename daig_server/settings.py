@@ -127,3 +127,10 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+#IAMPORT
+PAYMENT_MERCHANT_ID = 'imp20430455' #가맹점 식별코드
+
+IAMPORT_KEY = '8775273561033471' # REST API KEY
+IAMPORT_SECRET = 'LXch3wNWkxsAfO9VWckfG6nX8OjddTMYQZgUw4QQBjrR7BM3N6judGsmvMzIFmHvlYqR2gIEA9vHLhLz' #REST API secret
