@@ -1,7 +1,12 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import get_user_model
-from .models import *
+from models import *
+
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+from manage.py import schedule_manager
 
 User=get_user_model()
 
@@ -42,6 +47,3 @@ def change_project_status(request, project_uid):
 
 def get_project_progress(request, project_uid):
     return None
-
-
-# Create your views here.
