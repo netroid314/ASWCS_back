@@ -40,9 +40,10 @@ class scheduleManager:
 
     def allocate_user(self, user_id, project_id, task_index):
         self.user_list[user_id] = project_id
+        self.project_list[project_id].start_task(task_index)
 
     def update_project(self, project_id,task_no,gradient):
-        self.project_list[project].update_step_gradient(task_no,gradient)
+        self.project_list[project_id].update_gradient(task_no,gradient)
 
     def get_valid_project(self):
         for project in self.project_list.keys():

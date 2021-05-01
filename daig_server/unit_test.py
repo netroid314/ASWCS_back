@@ -9,6 +9,11 @@ class ProjectManagerTests(unittest.TestCase):
     def init(self):
         self.schedule_manager = scheduleManager()
 
+    def get_random_gradient(self):
+        tmp_weight = [np.random.rand(9)/10, np.random.rand(9)/10]
+        tmp_weight = np.array(tmp_weight, dtype=object)
+        return tmp_weight
+
     def test_initialization_new_project(self):
         self.init()
 
@@ -29,10 +34,24 @@ class ProjectManagerTests(unittest.TestCase):
 
         new_project = self.schedule_manager.get_valid_project()
         new_task_1 = self.schedule_manager.get_valid_task(new_project)
+        self.schedule_manager.allocate_user('100001',new_project,new_task_1)
 
+        new_task_2 = self.schedule_manager.get_valid_task(new_project)
+        self.schedule_manager.allocate_user('100002',new_project,new_task_2)
+        
+        new_task_3 = self.schedule_manager.get_valid_task(new_project)
+        self.schedule_manager.allocate_user('100003',new_project,new_task_3)
         # need to work for several user allocation and task occupication
 
-        self.assertEqual(new_task_1, 0)
+        tmp_gradient_1 = self.get_random_gradient()
+        tmp_gradient_2 = self.get_random_gradient()
+        tmp_gradient_3 = self.get_random_gradient()
+
+        self.schedule_manager.update_project(new_project,new_task_1,tmp_gradient_1)
+        self.schedule_manager.update_project(new_project,new_task_2,tmp_gradient_2)
+        self.schedule_manager.update_project(new_project,new_task_3,tmp_gradient_3)
+
+        self.assertEqual(self.schedule_manager.project_list[new_project].get_pariticipants_number(), 0)
 
 # execute unit test
 if __name__ == '__main__':  

@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import math
 
 STANDBY = 0
 INPROGRESS = 1
@@ -83,7 +84,6 @@ class projectManager:
                 return self.current_step * self.task_step_size + i
 
         for i in range(0, self.task_step_size):
-            print('time check')
             if(self.task_step_schedule[i] == INPROGRESS and self.task_time_limit_check(self.task_step_time_stamp[i])):
                 return self.current_step * self.task_step_size + i
 
@@ -91,7 +91,7 @@ class projectManager:
 
     def get_pariticipants_number(self):
         count = 0
-        for i in range(self.task_step_schedule):
+        for i in self.task_step_schedule:
             if(self.task_step_schedule[i] == INPROGRESS):
                 count += 1
         return count
@@ -110,7 +110,8 @@ class projectManager:
 
         return True
 
-    def update_gradient(self, step, task_number,gradient):
+    def update_gradient(self, task_number,gradient):
+        step = math.floor(task_number / self.task_step_size)
         if(step != self.current_step):
             print('Incorrect Step')
             return -1
