@@ -77,6 +77,10 @@ class projectManager:
     def get_step(self):
         return self.current_step
 
+
+    # Caution! this function is very important for making shedule for project.
+    # Modify this carefully to avoid loop holes or other problems
+    # currently, max paritipant = task step size
     def get_task_index(self):
         # Later, change for loop and if statement into filter based iteration
         for i in range(0, self.task_step_size):
