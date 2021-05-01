@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import get_user_model
 from .models import *
+from ast import literal_eval
 
 import sys
 import os
@@ -17,8 +18,8 @@ def create_project(request):
             "message":"[ERROR] GET ONLY"
         })
 
-    key = request.META.get('HTTP_AUTH')['key']
-    if User.objects.filter(key==key).exists()==False:
+    key = literal_eval(request.META.get('HTTP_AUTH'))['key']
+    if User.objects.filter(key=key).exists()==False:
         return JsonResponse({
             "is_successful":False,
             "message":"Expired key. Please Login again."
