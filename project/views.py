@@ -17,7 +17,7 @@ def create_project(request):
             "message":"[ERROR] GET ONLY"
         })
 
-    key = request.META.get("HTTP_AUTH")['key']
+    key = request.META.get('HTTP_AUTH')['key']
     if User.objects.filter(key==key).exists()==False:
         return JsonResponse({
             "is_successful":False,
