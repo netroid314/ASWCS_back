@@ -14,6 +14,7 @@ class projectManager:
         self.id = 0
         self.finished = False
         self.time_threshold = 2*SECOND
+        self.status = 'STANDBY'
 
         self.result_gradient = np.array([])
         self.step_gradient = np.array([])
@@ -70,7 +71,8 @@ class projectManager:
         self.current_step = step
         self.current_step_done_count = 0
 
-
+    def start_project(self):
+        self.status = 'INPROGRESS'
     ##################################################################
     # Get functions
 
@@ -152,6 +154,7 @@ class projectManager:
     def is_project_finished(self):
         if((self.current_step * self.task_step_size) >= self.task_total_count):
             self.finished = True
+            self.status = 'DONE'
         else:
             self.finished = False
         return self.finished

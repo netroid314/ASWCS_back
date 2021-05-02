@@ -54,6 +54,12 @@ class scheduleManager:
         self.project_user_match_list[self.user_list[user_id][1]].remove(user_id)
         self.user_list[user_id] = [STANDBY, '', -1]
 
+    def start_project(self, project_id):
+        self.project_list[project_id].status = 'INPROGRESS'
+
+    def pause_project(self,project_id):
+        self.project_list[project_id].status = 'STANDBY'
+
     def update_project(self, project_id,task_no,gradient):
         self.project_list[project_id].update_gradient(task_no,gradient)
 
