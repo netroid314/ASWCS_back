@@ -13,10 +13,11 @@ class projectManager:
     def __init__(self):
         self.id = 0
         self.finished = False
-        self.time_threshold = 2*SECOND
+        self.time_threshold = 1 * MINUTE
+        self.max_contributor = 0
         self.status = 'STANDBY'
 
-        self.result_gradient = np.array([])
+        self.result_weight = np.array([])
         self.step_gradient = np.array([])
 
         # task_schedule => total task schedule list
@@ -60,9 +61,13 @@ class projectManager:
 
         return self.init_tok_step
 
-    def set_gardient(self, initial_weight):
-        self.result_gradient = initial_weight
-        self.step_gradient = self.result_gradient - initial_weight
+    def set_max_contiributor(self,max_number):
+        self.max_contributor = max_number
+        return self.max_contributor
+
+    def set_weight(self, initial_weight):
+        self.result_weight = initial_weight
+        self.step_gradient = self.result_weight - initial_weight
         self.init_tok_gradient = True
 
         return self.init_tok_gradient
@@ -79,7 +84,6 @@ class projectManager:
     def get_step(self):
         return self.current_step
 
-
     # Caution! this function is very important for making shedule for project.
     # Modify this carefully to avoid loop holes or other problems
     # currently, max paritipant = task step size
@@ -94,6 +98,9 @@ class projectManager:
                 return self.current_step * self.task_step_size + i
 
         return -1
+
+    def get_result_weight(self):
+        return self.result_weight
 
     def get_pariticipants_number(self):
         count = 0
@@ -112,7 +119,7 @@ class projectManager:
         self.task_step_time_stamp[task_index % self.task_step_size] = time.time()
 
     def update_total_gradient(self, gradient):
-        self.result_gradient += gradient
+        self.result_weight += gradient
 
         return True
 
@@ -130,7 +137,7 @@ class projectManager:
         self.current_step_done_count += 1
 
         self.task_step_schedule[task_number % self.task_step_size] = DONE
-
+        print("gradient updated at ",task_number)
         if(self.is_step_done()):
             for key in self.task_step_schedule:
                 self.task_step_schedule[key] = STANDBY
@@ -144,6 +151,9 @@ class projectManager:
 
     ###################################################################
     # logical functions
+
+    def is_max_contiributor(self):
+        return self.get_pariticipants_number() >= self.max_contributor
 
     def is_step_done(self):
         return self.current_step_done_count == self.task_step_size
