@@ -21,10 +21,10 @@ def create_project(request):
     if request.method!='POST':
         return JsonResponse({
             "is_successful":False,
-            "message":"[ERROR] GET ONLY"
+            "message":"[ERROR] POST ONLY"
         })
 
-    key = literal_eval(request.META.get('HTTP_AUTH'))['key']
+    key = request.META.get('HTTP_AUTH')
     if User.objects.filter(key=key).exists()==False:
         return JsonResponse({
             "is_successful":False,
@@ -37,6 +37,13 @@ def create_project(request):
     rrs = request.POST.get('rrs', 'dummy')
     model_url = request.POST.get('model_url', 'dummy')
     max_contributor = request.POST.get('max_contributor', 5)
+    epoch = request.POST.get('epoch', 5)
+    total_task = request.POST.get('total_task', '15')
+    step_size = request.POST.get('step_size', '5')
+
+    total_task = int(total_task)
+    step_size = int(step_size)
+
     status = 'STANDBY'
     created_at = timezone.now()
     started_at = timezone.now()
@@ -57,13 +64,15 @@ def create_project(request):
 
     init_weight = np.load(request.FILES.get('weight'),allow_pickle = True)
 
-    schedule_manager.init_project(project_id=uid,total_step=3,step_size=1,weight=init_weight)
+    schedule_manager.init_project(project_id=uid,total_step=total_task,step_size=step_size,weight=init_weight)
 
     return JsonResponse({
         "is_successful":True,
         "project_uid":project.uid,
         "rrs_url":rrs,
         "model_url":model_url,
+        "total_task":total_task,
+        "step_size":step_size,
         "message":"Project successfully created."
     })
 
@@ -74,7 +83,7 @@ def start_project(request, project_uid):
             "message":"[ERROR] POST ONLY"
         })
 
-    key = literal_eval(request.META.get('HTTP_AUTH'))['key']
+    key = request.META.get('HTTP_AUTH')
     if User.objects.filter(key=key).exists()==False:
         return JsonResponse({
             "is_successful":False,
@@ -104,14 +113,34 @@ def start_project(request, project_uid):
 def upload_data(requset):
     return None
 
-def get_project_result(request, project_uid):
+def get_project_weight(request, project_uid):
     if request.method!='GET':
         return JsonResponse({
             "is_successful":False,
             "message":"[ERROR] GET ONLY"
         })
 
-    key = literal_eval(request.META.get('HTTP_AUTH'))['key']
+    key = request.META.get('HTTP_AUTH')
+    authorization_result = check_authorization(key)
+    if(authorization_result): return authorization_result
+
+    with TemporaryFile() as tf:
+        np.save(tf, schedule_manager.get_project_weight(project_id=project_uid))
+        _ = tf.seek(0)
+        return HttpResponse(tf,content_type='application/file')
+
+    return JsonResponse({
+            "is_successful":False,
+            "project_uid":project_id,
+            "message":"Internal Error"
+        })
+
+
+def get_project_result(request, project_uid):
+    if request.method!='GET':
+        return HttpResponse(status = '270')
+
+    key = request.META.get('HTTP_AUTH')
     authorization_result = check_authorization(key)
     if(authorization_result): return authorization_result
 
@@ -121,13 +150,7 @@ def get_project_result(request, project_uid):
             _ = tf.seek(0)
             return HttpResponse(tf,content_type='application/file')
 
-    return JsonResponse({
-            "is_successful":False,
-            "project_uid":project_id,
-            "message":"Project Not Finished"
-        })
-
-    return None
+    return HttpResponse(status = '270')
 
 def pause_project(request, project_uid):
     if request.method!='POST':
@@ -136,7 +159,7 @@ def pause_project(request, project_uid):
             "message":"[ERROR] POST ONLY"
         })
 
-    key = literal_eval(request.META.get('HTTP_AUTH'))['key']
+    key = request.META.get('HTTP_AUTH')
     authorization_result = check_authorization(key)
     if(authorization_result): return authorization_result
 
@@ -170,13 +193,13 @@ def get_available_project(request):
             "message":"[ERROR] GET ONLY"
         })
 
-    key = literal_eval(request.META.get('HTTP_AUTH'))['key']
+    key = request.META.get('HTTP_AUTH')
     authorization_result = check_authorization(key)
     if(authorization_result): return authorization_result
 
     project_id = _get_valid_project()
 
-    if(project_id != task_number):
+    if(project_id != -1):
         return JsonResponse({
             "is_successful": True,
             "project_uid": project_id,
@@ -195,17 +218,19 @@ def get_task_index(request, project_uid):
             "message":"[ERROR] GET ONLY"
         })
 
-    key = literal_eval(request.META.get('HTTP_AUTH'))['key']
+    key = request.META.get('HTTP_AUTH')
     authorization_result = check_authorization(key)
     if(authorization_result): return authorization_result
 
-    task_index = _get_valid_task(project_uid)
+    task_index = _get_valid_task(project_id=project_uid)
+    total_task_number = _get_total_task_number(project_id=project_uid)
 
     if(task_index > INVALID):
         return JsonResponse({
             "is_successful":True,
             "project_uid":project_uid,
             "task_index":task_index,
+            "total_task":total_task_number,
             "message":"Available task found"
         })
     else:
@@ -225,7 +250,7 @@ def start_project_task(request, project_uid):
             "message":"[ERROR] POST ONLY"
         })
 
-    key = literal_eval(request.META.get('HTTP_AUTH'))['key']
+    key = request.META.get('HTTP_AUTH')
     authorization_result = check_authorization(key)
     if(authorization_result): return authorization_result
 
@@ -258,7 +283,7 @@ def update_project_task(request, project_uid):
             "message":"[ERROR] POST ONLY"
         }),content_type='application/json')
 
-    key = literal_eval(request.META.get('HTTP_AUTH'))['key']
+    key = request.META.get('HTTP_AUTH')
     authorization_result = check_authorization(key)
     if(authorization_result): return authorization_result
     
@@ -273,13 +298,6 @@ def update_project_task(request, project_uid):
 
     gradient = np.load(request.FILES.get('gradient'),allow_pickle = True)
 
-    if(task_index.isdecimal()):
-        task_index = int(task_index)
-    else:
-        return JsonResponse({
-            "is_successful":False,
-            "message":"Invalid index"
-        })
 
     if((task_index == INVALID)):
         return JsonResponse({
@@ -312,11 +330,14 @@ def check_authorization(authorization_key):
     else:
         return False
 
-def _get_valid_project(project_id):
+def _get_valid_project():
     return schedule_manager.get_valid_project()
 
 def _get_valid_task(project_id):
     return schedule_manager.get_valid_task(project_id=project_id)
+
+def _get_total_task_number(project_id):
+    return schedule_manager.get_total_task_number(project_id=project_id)
 
 def _start_task(project_id, task_id):
     schedule_manager.start_project_task(project_id=project_id, task_no=task_id)

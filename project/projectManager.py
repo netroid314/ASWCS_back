@@ -3,8 +3,9 @@ import time
 import math
 
 STANDBY = 0
-INPROGRESS = 1
-DONE = 2
+CHECKED = 1
+INPROGRESS = 2
+DONE = 3
 
 SECOND = 1
 MINUTE = 60
@@ -84,18 +85,30 @@ class projectManager:
     def get_step(self):
         return self.current_step
 
+    def get_total_task_number(self):
+        return self.task_total_count
+
     # Caution! this function is very important for making shedule for project.
     # Modify this carefully to avoid loop holes or other problems
     # currently, max paritipant = task step size
     def get_task_index(self):
         # Later, change for loop and if statement into filter based iteration
+        if(self.is_project_finished()):
+            return -1
+            
         for i in range(0, self.task_step_size):
             if(self.task_step_schedule[i] == STANDBY):
+                self.task_step_schedule[i] = CHECKED
+                self.task_step_time_stamp[i] = time.time()
                 return self.current_step * self.task_step_size + i
 
         for i in range(0, self.task_step_size):
             if(self.task_step_schedule[i] == INPROGRESS and self.task_time_limit_check(self.task_step_time_stamp[i])):
                 return self.current_step * self.task_step_size + i
+
+        for i in range(0, self.task_step_size):
+            if(self.task_step_schedule[i] == CHECKED and self.task_time_limit_check(self.task_step_time_stamp[i])):
+                return self.current_step * self.task_step_size + i 
 
         return -1
 
@@ -124,6 +137,7 @@ class projectManager:
         return True
 
     def update_gradient(self, task_number,gradient):
+        task_number = int(task_number)
         step = math.floor(task_number / self.task_step_size)
         if(step != self.current_step):
             print('Incorrect Step')

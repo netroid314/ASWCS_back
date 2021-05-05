@@ -1,5 +1,6 @@
 import sys
 import os
+import numpy as np
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 
@@ -77,6 +78,12 @@ class scheduleManager:
 
     def get_valid_task(self, project_id):
         return self.project_list[project_id].get_task_index()
+
+    def get_total_task_number(self, project_id):    
+        return self.project_list[project_id].get_total_task_number()
+    
+    def get_project_weight(self, project_id):
+        return self.project_list[project_id].get_result_weight()
 
     def get_project_result(self, project_id):
         if not(self.is_project_finished(project_id = project_id)):
