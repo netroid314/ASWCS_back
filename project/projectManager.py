@@ -33,6 +33,7 @@ class projectManager:
         # total_count % step_size should be zero (or not later)
         self.task_total_count = 0
         self.task_step_size = 0
+        self.done_task_number = 0
 
         # current_step is literally current step
         # current_step_done_count is number of done tasks in current step
@@ -151,6 +152,7 @@ class projectManager:
         self.current_step_done_count += 1
 
         self.task_step_schedule[task_number % self.task_step_size] = DONE
+        done_task_number += 1
         print("gradient updated at ",task_number)
         if(self.is_step_done()):
             for key in self.task_step_schedule:
@@ -176,7 +178,7 @@ class projectManager:
         return (time.time() - task_time) > self.time_threshold
 
     def is_project_finished(self):
-        if((self.current_step * self.task_step_size) >= self.task_total_count):
+        if( self.done_task_number >= self.task_total_count):
             self.finished = True
             self.status = 'DONE'
         else:
