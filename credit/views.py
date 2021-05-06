@@ -32,6 +32,7 @@ class CreditCheckoutView():
         if not request.user.is_authenticated():
             return JsonResponse({}, status=401)
 
+        
         user = request.user
         amount = request.POST.get('amount')
         type = request.POST.get('type')
@@ -47,7 +48,7 @@ class CreditCheckoutView():
 
         if pay is not None:
             data = {
-                "works": True,
+                "is_successful": True,
                 "merchant_id": pay
             }
             return JsonResponse(data)
@@ -55,7 +56,7 @@ class CreditCheckoutView():
             return JsonResponse({}, status=401)
 
 
-class CreditImpView():
+class CreditImpView(): 
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated():
             return JsonResponse({}, status=401)
@@ -80,7 +81,7 @@ class CreditImpView():
             pay.save()
 
             data = {
-                "works": True
+                "is_successful": True
             }
 
             return JsonResponse(data)
