@@ -4,7 +4,7 @@ from .views import *
 
 urlpatterns = [
     path('create',create_project),
-    path('<str:project_uid>/upload',upload_data),
+    path('upload',get_upload_url),
     path('<str:project_uid>/start',start_project),
     path('<str:project_uid>/result',get_project_result),
     path('<str:project_uid>/pause',pause_project),
