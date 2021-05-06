@@ -152,7 +152,7 @@ class projectManager:
         self.current_step_done_count += 1
 
         self.task_step_schedule[task_number % self.task_step_size] = DONE
-        done_task_number += 1
+        self.done_task_number += 1
         print("gradient updated at ",task_number)
         if(self.is_step_done()):
             for key in self.task_step_schedule:
