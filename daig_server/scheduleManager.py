@@ -1,5 +1,6 @@
 import sys
 import os
+import numpy as np
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 
@@ -32,7 +33,7 @@ class scheduleManager:
         self.project_list[project_id] = new_project
         self.project_list[project_id].id = project_id
         self.project_list[project_id].set_total_step(total_step,step_size)
-        self.project_list[project_id].set_gardient(weight)
+        self.project_list[project_id].set_weight(weight)
         self.project_user_match_list[project_id] = []
 
         return 0
@@ -54,8 +55,17 @@ class scheduleManager:
         self.project_user_match_list[self.user_list[user_id][1]].remove(user_id)
         self.user_list[user_id] = [STANDBY, '', -1]
 
+    def start_project(self, project_id):
+        self.project_list[project_id].status = 'INPROGRESS'
+
+    def pause_project(self,project_id):
+        self.project_list[project_id].status = 'STANDBY'
+
     def update_project(self, project_id,task_no,gradient):
-        self.project_list[project_id].update_gradient(task_no,gradient)
+        return self.project_list[project_id].update_gradient(task_no,gradient)
+
+    def start_project_task(self, project_id, task_no):
+        self.project_list[project_id].start_task(task_no)
 
     ##################################################################
     # Get function for getting various overall projects information
@@ -69,6 +79,18 @@ class scheduleManager:
     def get_valid_task(self, project_id):
         return self.project_list[project_id].get_task_index()
 
+    def get_total_task_number(self, project_id):    
+        return self.project_list[project_id].get_total_task_number()
+    
+    def get_project_weight(self, project_id):
+        return self.project_list[project_id].get_result_weight()
+
+    def get_project_result(self, project_id):
+        if not(self.is_project_finished(project_id = project_id)):
+            return np.array([-1])
+
+        return self.project_list[project_id].get_result_weight()
+
     def get_user_allocated_project(self, user_id):
         return self.user_list[user_id][1]
 
@@ -77,3 +99,9 @@ class scheduleManager:
 
     def get_available_users(self):
         return len(dict(filter(lambda user:user[1][0]==STANDBY,self.user_list.items())))
+
+    ##################################################################
+    # Belows are logicals
+
+    def is_project_finished(self, project_id):
+        return self.project_list[project_id].is_project_finished()

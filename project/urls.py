@@ -7,6 +7,12 @@ urlpatterns = [
     path('<str:project_uid>/upload',upload_data),
     path('<str:project_uid>/start',start_project),
     path('<str:project_uid>/result',get_project_result),
-    path('<str:project_uid>/status',change_project_status),
+    path('<str:project_uid>/pause',pause_project),
     path('<str:project_uid>/progress',get_project_progress),
+
+    path('<str:project_uid>/project/weight',get_project_weight),
+    path('get/project',get_available_project),
+    path('<str:project_uid>/task/get',get_task_index),
+    path('<str:project_uid>/task/start',start_project_task),
+    path('<str:project_uid>/task/update',update_project_task),
 ]
