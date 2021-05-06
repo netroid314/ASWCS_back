@@ -15,7 +15,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from manage import schedule_manager
 
-User=get_user_model()
+User = get_user_model()
 INVALID = -1
 
 def create_project(request):
@@ -47,12 +47,9 @@ def create_project(request):
 
     status = 'STANDBY'
     created_at = timezone.now()
-    started_at = timezone.now()
-    finished_at = timezone.now()
 
-    project=Project.objects.create(uid=uid,owner=user,rrs_url=rrs,model_url=model_url,
-        max_contributor=max_contributor,status=status,created_at=created_at,
-        started_at=started_at, finished_at=finished_at)
+    project = Project.objects.create(uid=uid,owner=user,model_url=model_url,
+        max_contributor=max_contributor,status=status,created_at=created_at)
 
 
     numpy_file = request.FILES.get('weight', INVALID)
@@ -70,7 +67,6 @@ def create_project(request):
     return JsonResponse({
         "is_successful":True,
         "project_uid":project.uid,
-        "rrs_url":rrs,
         "model_url":model_url,
         "total_task":total_task,
         "step_size":step_size,
@@ -91,21 +87,20 @@ def start_project(request, project_uid):
             "message":"Expired key. Please Login again."
         })
     
-    project_id = request.POST.get('project_id', None)
-    target_project =  Project.objects.filter(uid = project_id)
+    target_project = Project.objects.filter(uid = project_uid)
 
     if(target_project.exists()):
         target_project.update(status='INPROGRESS')
-        schedule_manager.start_project(project_id)
+        schedule_manager.start_project(project_uid)
         return JsonResponse({
             "is_successful":True,
-            "project_uid":project_id,
+            "project_uid":project_uid,
             "message":"Project successfully launched."
         })
     else:
         return JsonResponse({
             "is_successful":False,
-            "project_uid":project_id,
+            "project_uid":project_uid,
             "message":"Project does not exists"
         })
 
@@ -429,34 +424,28 @@ def update_project_task(request, project_uid):
     if(authorization_result): return authorization_result
     
     task_index = request.POST.get('task_index', INVALID)
+    spent_time = request.POST.get('spent_time', INVALID)
     numpy_file = request.FILES.get('gradient', INVALID)
 
-    if(numpy_file == INVALID):
+    if ((task_index == INVALID) or (spent_time == INVALID) or (numpy_file == INVALID)):
         return JsonResponse({
             "is_successful":False,
-            "message":"Invalid Numpy data"
+            "message":"INVALID params detected"
         })
 
-    gradient = np.load(request.FILES.get('gradient'),allow_pickle = True)
+    gradient = np.load(numpy_file,allow_pickle = True)
 
-
-    if((task_index == INVALID)):
+    result = _update_project(project_id=project_uid,task_id=task_index,gradient=gradient, time = spent_time)
+    if(result == INVALID):
         return JsonResponse({
-            "is_successful":False,
-            "message":"INVALID items found"
+        "is_successful":False,
+        "message":"Gradient Update fail. expired index"
         })
-    else:
-        result = _update_project(project_id=project_uid,task_id=task_index,gradient=gradient)
-        if(result == INVALID):
-            return JsonResponse({
-            "is_successful":False,
-            "message":"Unavailable Index"
-            })
 
-        return JsonResponse({
-            "is_successful":True,
-            "message":"Gradient Updated"
-        })
+    return JsonResponse({
+        "is_successful":True,
+        "message":"Gradient Updated Success"
+    })
 
 
 
@@ -483,11 +472,14 @@ def _get_total_task_number(project_id):
 def _start_task(project_id, task_id):
     schedule_manager.start_project_task(project_id=project_id, task_no=task_id)
 
-def _update_project(project_id, task_id, gradient):
-    return schedule_manager.update_project(project_id=project_id, task_no=task_id, gradient=gradient)
+def _update_project(project_id, task_id, gradient, time):
+    return schedule_manager.update_project(project_id=project_id, task_no=task_id, gradient=gradient, time = time)
     
+def _load_projects_from_DB():
+    return 1
+    # gonna do this far later
 
-def make_project_storage(request, project_uid):
+def get_upload_url(request, project_uid):
     key=eval(request.META.get('HTTP_AUTH')).get("key")
     if User.objects.filter(key=key).exists()==False:
         return JsonResponse({
