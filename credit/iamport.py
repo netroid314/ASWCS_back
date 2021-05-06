@@ -3,7 +3,7 @@ import json
 
 from django.conf import settings
 
-
+## 결제를 위한 아임포트 토큰 발급
 def get_access_token():
     access_data = {
         'imp_key': settings.IAMPORT_KEY,
@@ -19,7 +19,7 @@ def get_access_token():
     else:
         return None
 
-
+## 검증 단계
 def validation_prepare(merchant_id, amount, *args, **kwargs):
     access_token = get_access_token()
 
@@ -44,6 +44,7 @@ def validation_prepare(merchant_id, amount, *args, **kwargs):
         raise ValueError("인증 토큰이 없습니다.")
 
 
+## 결제가 끝난 후 결제 정보를 가져온다
 def get_Payment(merchant_id, *args, **kwargs):
     access_token = get_access_token()
 
