@@ -55,6 +55,8 @@ class projectManager:
         self.task_total_count = total_task
         self.task_step_size = step_size
 
+        self.set_max_contiributor(math.ceil(step_size/2))
+
         self.current_step = 0
         self.init_tok_step  = True
 
@@ -95,6 +97,9 @@ class projectManager:
     def get_task_index(self):
         # Later, change for loop and if statement into filter based iteration
         if(self.is_project_finished()):
+            return -1
+        
+        if(self.is_max_contributor()):
             return -1
             
         for i in range(0, self.task_step_size):
@@ -137,23 +142,25 @@ class projectManager:
 
         return True
 
-    def update_gradient(self, task_number,gradient):
+    def update_gradient(self, task_number,gradient, time = -1):
         task_number = int(task_number)
         step = math.floor(task_number / self.task_step_size)
         if(step != self.current_step):
-            print('Incorrect Step')
+            print("project id: ",self.id,' # Task abandoned: Incorrect Step')
             return -1
 
         if(self.task_step_schedule[task_number % self.task_step_size] == DONE):
-            print('Duplicated approach at ' + str(step) + ':' + str(task_number % self.task_step_size))
+            print("project id: ",self.id,' # Task abandoned: Duplicated approach at ' + str(task_number))
             return -1
 
         self.step_gradient += gradient
         self.current_step_done_count += 1
 
+        if(self.is_new_shortest_time(time)): self.time_threshold = time
+
         self.task_step_schedule[task_number % self.task_step_size] = DONE
-        done_task_number += 1
-        print("gradient updated at ",task_number)
+        self.done_task_number += 1
+        print("project id: ",self.id," # gradient updated at ",task_number)
         if(self.is_step_done()):
             for key in self.task_step_schedule:
                 self.task_step_schedule[key] = STANDBY
@@ -168,14 +175,17 @@ class projectManager:
     ###################################################################
     # logical functions
 
-    def is_max_contiributor(self):
+    def is_max_contributor(self):
         return self.get_pariticipants_number() >= self.max_contributor
 
     def is_step_done(self):
         return self.current_step_done_count == self.task_step_size
 
     def task_time_limit_check(self, task_time):
-        return (time.time() - task_time) > self.time_threshold
+        return (time.time() - task_time) > (self.time_threshold * 1.5)
+
+    def task_search_limit_check(self, task_time):
+        return (time.time() - task_time) > 3 * SECOND
 
     def is_project_finished(self):
         if( self.done_task_number >= self.task_total_count):
@@ -184,3 +194,6 @@ class projectManager:
         else:
             self.finished = False
         return self.finished
+
+    def is_new_shortest_time(self,time):
+        return (time > -1) and (time < self.time_threshold)

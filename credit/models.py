@@ -11,9 +11,9 @@ User=get_user_model()
 
 class CreditLog(models.Model):
     user=models.ForeignKey(User, on_delete=models.CASCADE)
-    action=models.CharField(max_length=10)
-    details=models.TextField()
-    amount=models.IntegerField()
+    action=models.CharField(max_length=10,null=True, blank=True)
+    details=models.TextField(null=True, blank=True)
+    amount=models.IntegerField(null=True, blank=True)
     date=models.DateTimeField(default=timezone.now())
 
 # 쇼핑몰 내부적으로 사용할 주문 모델

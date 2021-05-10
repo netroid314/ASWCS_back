@@ -38,6 +38,11 @@ class scheduleManager:
 
         return 0
 
+    def reset(self):
+        self.user_list = {}
+        self.project_list = {}
+        self.project_user_match_list = {}
+
     ##################################################################
     # Various distributed learning purpose functions
 
@@ -61,8 +66,8 @@ class scheduleManager:
     def pause_project(self,project_id):
         self.project_list[project_id].status = 'STANDBY'
 
-    def update_project(self, project_id,task_no,gradient):
-        return self.project_list[project_id].update_gradient(task_no,gradient)
+    def update_project(self, project_id,task_no,gradient,time):
+        return self.project_list[project_id].update_gradient(task_number = task_no, gradient = gradient, time = time)
 
     def start_project_task(self, project_id, task_no):
         self.project_list[project_id].start_task(task_no)
