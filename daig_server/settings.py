@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,19 +36,22 @@ INSTALLED_APPS = [
     'userauth.apps.UserauthConfig',
     'project.apps.ProjectConfig',
     'credit.apps.CreditConfig',
+    'payment.apps.PaymentConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
+
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+    #'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -58,7 +62,7 @@ ROOT_URLCONF = 'daig_server.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -109,7 +113,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'
 
 USE_I18N = True
 
@@ -129,8 +133,18 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-#IAMPORT
-PAYMENT_MERCHANT_ID = 'imp20430455' #가맹점 식별코드
+# Iamport
+PAYMENT_MERCHANT_ID = 'imp20430455'
 
-IAMPORT_KEY = '8775273561033471' # REST API KEY
-IAMPORT_SECRET = 'LXch3wNWkxsAfO9VWckfG6nX8OjddTMYQZgUw4QQBjrR7BM3N6judGsmvMzIFmHvlYqR2gIEA9vHLhLz' #REST API secret
+PAYMENT_REST_KEY = '8775273561033471'
+PAYMENT_REST_SECRET = 'LXch3wNWkxsAfO9VWckfG6nX8OjddTMYQZgUw4QQBjrR7BM3N6judGsmvMzIFmHvlYqR2gIEA9vHLhLz'
+
+PAYMENT_MODEL = 'credit.OrderPayment'  # Payment를 상속 받은 주문 모델
+
+PAYMENT_RETRY_VIEW = 'pay'
+PAYMENT_HOME_VIEW = 'home'
+
+PAYMENT_CONFIG = {
+    'pg': 'html5_inicis',  # PG 종류 (아임포트 설정)
+    'pay_method': 'card'   # 결제 방법
+}

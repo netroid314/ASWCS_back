@@ -1,0 +1,67 @@
+{% extends "payment/payment_base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block scripts %}
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js" ></script>
+    <script type="text/javascript" src="https://cdn.iamport.kr/js/iamport.payment-1.1.5.js"></script>
+    <!-- iamport -->
+    <script>
+        /* global IMP */
+        IMP.init('{{ merchant_id }}');
+
+        /* global jQuery */
+        
+        var data = JSON.parse("{{payment_data_json | escapejs}}");
+        jQuery(function($) {
+            $('.pay').on('click', function(e) {
+                e.preventDefault();
+
+                IMP.request_pay( data,
+                function(rsp) {
+                    location.href = '{{ payment_data.m_redirect_url }}' +
+                        '?imp_uid=' + rsp.imp_uid +
+                        '&merchant_uid=' + rsp.merchant_uid;
+                });
+            });
+        });
+    </script>
+    <!-- iamport end -->
+{% endblock %}
+
+{% block content %}
+    <div class="pay-body pay-bg">
+        <div class="container">
+           
+                <div class="panel panel-default modal-dialog">
+
+                    <div class="panel-body text-center">
+                        <h1>결제 진행</h1>
+
+                        <dl class="dl-horizontal mt60 mb60">
+                            <dt>
+                               결제 내용
+                            </dt>
+                            <dd>
+                                {{ payment.name }}
+                            </dd>
+                            <dt>
+                               결제 금액
+                            </dt>
+                            <dd>
+                                {{ payment.amount|intcomma }} 원
+                            </dd>
+                            <dt class="mt20">
+                               고객명
+                            </dt>
+                            <dd class="mt20">
+                                {{ payment.buyer_name }}
+                            </dd>
+                        </dl>
+
+                        <button class="btn btn-lg btn-primary btn-block pay">결제 하기</button>
+                    </div>
+                </div>
+        </div>
+    </div>
+{% endblock %}

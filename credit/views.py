@@ -1,7 +1,16 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from .models import *
+from django.http import HttpResponse
 
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
+from django.urls import reverse
+
+from credit.forms import OrderForm
+from credit.models import Order, OrderPayment
+
+User=get_user_model()
 
 def get_credit_log(request):
     if request.method!='GET':
@@ -27,68 +36,31 @@ def get_credit_log(request):
             "message":"Successfully got credit log"
     })
 
-class CreditCheckoutView():
-    def post(self, request, *args, **kwargs):
-        if not request.user.is_authenticated():
-            return JsonResponse({}, status=401)
+def home(request):
+    if request.method == 'POST':
+        form = OrderForm(request.POST)
+        if form.is_valid():
+            order = form.save()
+            payment = OrderPayment.from_order(order)
 
-        
-        user = request.user
-        amount = request.POST.get('amount')
-        type = request.POST.get('type')
+            return HttpResponseRedirect(reverse('payment:pay', args=[payment.pk]))
+    else:
+        form = OrderForm(initial={
+            'name': '크레딧 충전',
+            'amount': 1000,
+            'buyer': '홍길동',
+            'addr': '주소',
+            'subaddr': '상세주소',
+            'postcode': '123-456',
+            'email': 'iamport@siot.do',
+            'tel': '010-1234-5678'
+        })
 
-        try:
-            pay = CreditPayment.objects.create_new(
-                user=user,
-                amount=amount,
-                type=type
-            )
-        except:
-            pay = None
-
-        if pay is not None:
-            data = {
-                "is_successful": True,
-                "merchant_id": pay
-            }
-            return JsonResponse(data)
-        else:
-            return JsonResponse({}, status=401)
+    return render(request, 'home.html', {'form': form})
 
 
-class CreditImpView(): 
-    def post(self, request, *args, **kwargs):
-        if not request.user.is_authenticated():
-            return JsonResponse({}, status=401)
+def retry_order(request, order_id):
+    order = get_object_or_404(Order, pk=order_id)
+    payment = OrderPayment.from_order(order)
 
-        user = request.user
-        merchant_id = request.POST.get('merchant_id')
-        imp_id = request.POST.get('imp_id')
-        amount = request.POST.get('amount')
-
-        try:
-            pay = CreditPayment.objects.get(
-                user=user,
-                order_id=merchant_id,
-                amount=amount
-            )
-        except:
-            pay = None
-
-        if pay is not None:
-            pay.transaction_id = imp_id
-            pay.success = True
-            pay.save()
-
-            data = {
-                "is_successful": True
-            }
-
-            return JsonResponse(data)
-        else:
-            return JsonResponse({}, status=401)
-
-def charge_credit(request):
-    template = 'charge.html'
-
-    return render(request, template)
+    return HttpResponseRedirect(reverse('payment:pay', args=[payment.pk]))
