@@ -10,7 +10,8 @@ class UserAdmin_2(UserAdmin):
     list_display = (
         'username',
         'user_SN',
-        'date_joined'
+        'date_joined',
+        'credit'
     )
 
     list_display_links = (
@@ -18,7 +19,7 @@ class UserAdmin_2(UserAdmin):
     )
 
     fieldsets=[
-        (None, {'fields': ('username', 'password', 'date_joined')})
+        (None, {'fields': ('username', 'password', 'date_joined','credit')})
     ]
 
 

@@ -1,12 +1,11 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+
 #iamport
-from credit.iamport import validation_prepare, get_Payment
-import time
-import random
-import hashlib
-from django.db.models.signals import post_save
+from django.urls import reverse
+from daig_server import settings
+from payment.models import Payment
 
 User=get_user_model()
 
@@ -17,95 +16,86 @@ class CreditLog(models.Model):
     amount=models.IntegerField(null=True, blank=True)
     date=models.DateTimeField(default=timezone.now())
 
-class CreditStatus(models.Model):
-    user=models.ForeignKey(User, on_delete=models.CASCADE)
-    credit = models.PositiveIntegerField(default=0)
-    created = models.DateTimeField(auto_now_add=True, auto_now=False)
-    timestamp = models.DateTimeField(auto_now_add=False, auto_now=True)
-
-    def __str__(self):
-        return str(self.credit)
-
-class CreditPayment(models.Model):
-    user=models.ForeignKey(User, on_delete=models.CASCADE)
-    payment_id = models.CharField(max_length=120, null=True, blank=True)
-    order_id = models.CharField(max_length=120, unique=True)
-    amount = models.PositiveIntegerField(default=0)
-    success = models.BooleanField(default=False)
-    payment_status = models.CharField(max_length=220, null=True, blank=True)
-    type = models.CharField(max_length=120)
-    created = models.DateTimeField(auto_now_add=True, auto_now=False)
-
-    def __str__(self):
-        return self.order_id
-
+# 쇼핑몰 내부적으로 사용할 주문 모델
+class Order(models.Model):
     class Meta:
-        ordering = ['-created']
+        verbose_name = "주문"
+        verbose_name_plural = "주문 목록"
 
-class PaymentManager(models.Manager):
-    # 새로운 결제 생성
-    def create_new(self, user, amount, type, success=None, transaction_status=None):
-        if not user:
-            raise ValueError("유저가 확인되지 않습니다.")
-        short_hash = hashlib.sha1(str(random.random())).hexdigest()[:2]
-        time_hash = hashlib.sha1(str(int(time.time()))).hexdigest()[-3:]
-        base = str(user.email).split("@")[0]
-        key = hashlib.sha1(short_hash + time_hash + base).hexdigest()[:10]
-        new_order_id = "%s" % (key)
+    name = models.CharField('주문명', max_length=100)
+    amount = models.PositiveIntegerField('금액')
 
-        # 아임포트 결제 사전 검증 단계
-        validation_prepare(new_order_id, amount)
+    email = models.EmailField('이메일', null=True, blank=True)
+    buyer = models.CharField('구매자명', max_length=50, null=True, blank=True)
+    tel = models.CharField('구매자 연락처', max_length=100)
 
-        # 결제 저장
-        new_pay = self.model(
-            user=user,
-            order_id=new_order_id,
-            amount=amount,
-            type=type
-        )
+    addr = models.CharField('구매자 주소', max_length=256, null=True, blank=True)
+    subaddr = models.CharField('구매자 주소 나머지', max_length=256, null=True, blank=True)
+    postcode = models.CharField('구매자 우편번호', max_length=20, null=True, blank=True)
 
-        if success is not None:
-            new_pay.success = success
-            new_pay.transaction_status = transaction_status
+    PAY_STATUS_CHOCIES = (
+        ('ready', '결제 대기'),
+        ('confirmed', '결제 완료'),
+        ('canceled', '결제 취소'),
+    )
+    pay_status = models.CharField('결제 상태', max_length=30, default='ready', choices=PAY_STATUS_CHOCIES)
 
-        new_pay.save(using=self._db)
-        return new_pay.order_id
+    created_at = models.DateTimeField('생성일자', auto_now_add=True)
 
-    # 생성된 결제 검증
-    def validation_pay(self, merchant_id):
-        result = get_Payment(merchant_id)
 
-        if result['status'] is not 'paid':
-            return result
+# Django-iamport와 연동을 위해 사용할 모델
+class OrderPayment(Payment):
+    class Meta:
+        verbose_name = "제품 결제"
+        verbose_name_plural = "제품 결제 목록"
+
+    order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, related_name='payments')
+
+    @staticmethod
+    def from_order(order):
+
+        payment = OrderPayment()
+        payment.name = ' %s' % order.name
+        payment.order = order
+
+        payment.amount = order.amount
+
+        payment.buyer_email = order.email
+        payment.buyer_name = order.buyer
+        payment.buyer_tel = order.tel
+        payment.buyer_addr = order.addr + " " + order.subaddr
+        payment.buyer_postcode = order.postcode
+
+        # ID 생성하기
+        if settings.DEBUG:
+            prefix = "DAIG_debug"
         else:
-            return None
+            prefix = "DAIG"
 
-    def all_for_user(self, user):
-        return super(PaymentManager, self).filter(user=user)
+        now = timezone.localtime(timezone.now()).strftime('%Y%m%d_%H%M%S')
 
-    def get_recent_user(self, user, num):
-        return super(PaymentManager, self).filter(user=user)[:num]
+        payment.uid = "%s_%s_%s" % (prefix, now, order.pk)
+        payment.save()
 
-def new_credit_trans_validation(sender, instance, created, *args, **kwargs):
-    if instance.transaction_id:
-        # 거래 후 아임포트에서 넘긴 결과
-        v_trans = PointTransaction.objects.validation_trans(
-            merchant_id=instance.order_id
-        )
+        return payment
 
-        res_merchant_id = v_trans['merchant_id']
-        res_imp_id = v_trans['imp_id']
-        res_amount = v_trans['amount']
+    # 결제 완료 후처리 하기(완료 시 호출 됩니다)
+    def on_success(self):
+        self.order.pay_status = 'confirmed'
+        self.order.save(update_fields=['pay_status'])
 
-        # 데이터베이스에 실제 결제된 정보가 있는지 체크
-        r_trans = PointTransaction.objects.filter(
-            order_id=res_merchant_id,
-            transaction_id=res_imp_id,
-            amount=res_amount
-        ).exists()
+    # 취소 발생 시 쇼핑몰에서 동작시킬 처리
+    def on_cancel(self):
+        self.order.pay_status = 'canceled'
+        self.order.save(update_fields=['pay_status'])  # Payment의 상태는 자동으로 변경됨
 
-        if not v_trans or not r_trans:
-            raise ValueError('비정상적인 거래입니다.')
+    # 결제 재시도 URL
+    def get_retry_url(self):
+        return reverse('credit:retry_order', args=[self.order.pk])
 
-
-post_save.connect(new_credit_trans_validation, sender=CreditPayment)
+    # 결제 후 이동 할 Home URL
+    def get_home_url(self):
+        return '/'
+    def pay_start(request):
+        payment = OrderPayment.from_order(order_info)
+        return HttpResponseRedirect(reverse('payment:pay', args=[payment.pk]))

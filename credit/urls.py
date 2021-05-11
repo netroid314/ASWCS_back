@@ -2,11 +2,13 @@ from django.contrib import admin
 from django.conf.urls import url
 from django.urls import path, include
 from .views import *
+from . import views
+
+app_name = "credit"
 
 urlpatterns = [
     path('log',get_credit_log),
-    url('charge', charge_credit),
-    url('checkout', CreditCheckoutView, name ='credit_checkout'),
-    url('validation', CreditImpView, name = 'credit_validation'),
     url('admin/', admin.site.urls),
+    path('', views.home, name='home'),
+    path('retry_order/<int:order_id>', views.retry_order, name='retry_order'),
 ]
