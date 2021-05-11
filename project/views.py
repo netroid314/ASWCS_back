@@ -35,8 +35,6 @@ def create_project(request):
     user=User.objects.get(key=key)
 
     uid = str(ObjectId())
-    rrs = request.POST.get('rrs', 'dummy')
-    model_url = request.POST.get('model_url', 'dummy')
     max_contributor = request.POST.get('max_contributor', 5)
     epoch = request.POST.get('epoch', 5)
     total_task = request.POST.get('total_task', '15')
@@ -48,7 +46,7 @@ def create_project(request):
     status = 'STANDBY'
     created_at = timezone.now()
 
-    project = Project.objects.create(uid=uid,owner=user,model_url=model_url,
+    project = Project.objects.create(uid=uid,owner=user,
         max_contributor=max_contributor,status=status,created_at=created_at)
 
 
@@ -67,7 +65,6 @@ def create_project(request):
     return JsonResponse({
         "is_successful":True,
         "project_uid":project.uid,
-        "model_url":model_url,
         "total_task":total_task,
         "step_size":step_size,
         "message":"Project successfully created."
@@ -106,66 +103,22 @@ def start_project(request, project_uid):
 
     return None
 
-def upload_data(requset):
-    return None
+
 
 # 아래와 같은 형태로 data 받음
 # {
 #     "project_uid":"",
-#     "train_data":[{
-#         "filename":"",
-#         "file_path":"" 
-#      }]
+#     "data":"",
+#     "label":""
 # }
-# def get_upload_url(request, project_uid):
-#     service_name = 's3'
-#     endpoint_url = 'https://kr.object.ncloudstorage.com'
-#     region_name = 'kr-standard'
-#     access_key = '0C863406F8D54433789F'
-#     secret_key = 'CC66B33F3B1487B10DF50F82638B4065CD4723B0'
-
-#     s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
-#                       aws_secret_access_key=secret_key)
-
-#     # project_uid=request.POST.get('project_uid')
-#     train_data=json.loads(request.body)["train_data"]
-#     print(train_data)
-
-#     bucket_name='daig'
-    
-#     project=Project.objects.get(uid=project_uid)
-#     res_data=[]
-#     for td in train_data:
-#         task=Task.objects.create(project=project)
-#         object_name=f'project/{project_uid}/task/{task.uid}/{td["filename"]}'
-#         url=s3.generate_presigned_url("put_object",Params={
-#             'Bucket':bucket_name,
-#             'Key':object_name
-#         }, ExpiresIn=3600)
-#         task.save()
-#         res_data.append({
-#             "file_path":td["file_path"],
-#             "url":url
-#         })
-
-#     return JsonResponse({
-#         "data":res_data
-#     })
-# -----------------------------------------------------------------------------
-
-# 아래와 같은 형태로 data 받음
-# {
-#     "project_uid":"",
-#     "filename":"",
-# }
-def generate_task_url(request):
+def get_data_url(request):
     if request.method!='POST':
         return JsonResponse({
             "is_successful":False,
             "message":"[ERROR] POST ONLY"
         })
 
-    key=eval(request.META.get('HTTP_AUTH')).get("key")
+    key = request.META.get('HTTP_AUTH')
     if User.objects.filter(key=key).exists()==False:
         return JsonResponse({
             "is_successful":False,
@@ -181,40 +134,48 @@ def generate_task_url(request):
     s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
                       aws_secret_access_key=secret_key)
 
-    request_data=json.loads(request.body)
+    data = request.POST.get('data', '')
+    label = request.POST.get('label', '')
+    project_uid = request.POST.get('project_uid', '')
     bucket_name='daig'
 
     project=Project.objects.get(uid=project_uid)
 
     task=Task.objects.create(project=project)
-    task.rrs_url=f'project/{project_uid}/task/{task.uid}/{request_data["filename"]}'
+    task.data_url=f'project/{project_uid}/task/{task.uid}/{data}'
+    task.label_url=f'project/{project_uid}/task/{task.uid}/{label}'
+
     task.save()
 
-    url=s3.generate_presigned_url("put_object",Params={
+    data_url=s3.generate_presigned_url("put_object",Params={
         'Bucket':bucket_name,
-        'Key':task.rrs_url
+        'Key':task.data_url
+    }, ExpiresIn=3600)
+
+    label_url=s3.generate_presigned_url("put_object",Params={
+        'Bucket':bucket_name,
+        'Key':task.label_url
     }, ExpiresIn=3600)
     
-    res_data={
+    return JsonResponse({
         "is_succesful":True,
-        "url":url
-    }
-
-    return JsonResponse(res_data)
+        "data_url":data_url,
+        "label_url":label_url
+    })
 
 # 아래와 같은 형태로 data 받음
 # {
 #     "project_uid":"",
-#     "filename":"",
+#     "model":"",
 # }
-def generate_model_url(request):
+def get_model_url(request):
     if request.method!='POST':
         return JsonResponse({
             "is_successful":False,
             "message":"[ERROR] POST ONLY"
         })
 
-    key=eval(request.META.get('HTTP_AUTH')).get("key")
+    key = request.META.get('HTTP_AUTH')
     if User.objects.filter(key=key).exists()==False:
         return JsonResponse({
             "is_successful":False,
@@ -230,24 +191,24 @@ def generate_model_url(request):
     s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
                       aws_secret_access_key=secret_key)
 
-    request_data=json.loads(request.body)
+    model = request.POST.get('model', '')
+    project_uid = request.POST.get('project_uid', '')
     bucket_name='daig'
 
     project=Project.objects.get(uid=project_uid)
-    project.model_url=f'project/{project_uid}/model/{request_data["filename"]}'
+    project.model_url=f'project/{project_uid}/model/{model}'
     project.save()
 
     url=s3.generate_presigned_url("put_object",Params={
         'Bucket':bucket_name,
         'Key':project.model_url
     }, ExpiresIn=3600)
-    
-    res_data={
-        "is_succesful":True,
-        "url":url
-    }
+    print("hello")
 
-    return JsonResponse(res_data)
+    return JsonResponse({
+        "is_succesful":True,
+        "model_url":url
+    })
 
 def get_project_weight(request, project_uid):
     if request.method!='GET':
@@ -479,49 +440,4 @@ def _load_projects_from_DB():
     return 1
     # gonna do this far later
 
-def get_upload_url(request, project_uid):
-    key=eval(request.META.get('HTTP_AUTH')).get("key")
-    if User.objects.filter(key=key).exists()==False:
-        return JsonResponse({
-            "is_successful":False,
-            "message":"Expired key. Please Login again."
-        })
 
-    user=User.objects.get(key=key)
-
-    projects=Project.objects.filter(status="in_progress").all()
-
-    project=projects[0] # project 선택 방법 추가/수정 필요
-
-
-    tasks=Task.objects.filter(project=p, status="not_started").all()
-
-    task=tasks[0] # task 선택 방법 추가/수정 필요
-
-
-    task.tasker=user
-    task.status="assgined"
-    task.save()
-
-    service_name = 's3'
-    endpoint_url = 'https://kr.object.ncloudstorage.com'
-    region_name = 'kr-standard'
-    access_key = '0C863406F8D54433789F'
-    secret_key = 'CC66B33F3B1487B10DF50F82638B4065CD4723B0'
-
-    s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
-                      aws_secret_access_key=secret_key)
-
-    bucket_name='daig'
-    url=s3.generate_presigned_url("get_object",Params={
-        'Bucket':bucket_name,
-        'Key':task.rrs_url
-    }, ExpiresIn=3600)
-
-    res_data={
-        "project_uid":project.uid,
-        "task_uid":task.uid,
-        "url":url
-    }
-    
-    return res_data
