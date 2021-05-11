@@ -136,12 +136,13 @@ def get_data_url(request):
 
     data = request.POST.get('data', '')
     label = request.POST.get('label', '')
+    index = request.POST.get('index', '')
     project_uid = request.POST.get('project_uid', '')
     bucket_name='daig'
 
     project=Project.objects.get(uid=project_uid)
 
-    task=Task.objects.create(project=project)
+    task=Task.objects.create(uid=(project.uid+str(index)), project=project)
     task.data_url=f'project/{project_uid}/task/{task.uid}/{data}'
     task.label_url=f'project/{project_uid}/task/{task.uid}/{label}'
 
@@ -203,12 +204,27 @@ def get_model_url(request):
         'Bucket':bucket_name,
         'Key':project.model_url
     }, ExpiresIn=3600)
-    print("hello")
 
     return JsonResponse({
         "is_succesful":True,
         "model_url":url
     })
+
+def get_model_url_for_learnig(request, project_uid):
+    if request.method!='GET':
+        return JsonResponse({
+            "is_successful":False,
+            "message":"[ERROR] POST ONLY"
+        })
+
+    key = request.META.get('HTTP_AUTH')
+    if User.objects.filter(key=key).exists()==False:
+        return JsonResponse({
+            "is_successful":False,
+            "message":"Expired key. Please Login again."
+        })
+
+    
 
 def get_project_weight(request, project_uid):
     if request.method!='GET':
@@ -322,13 +338,58 @@ def get_task_index(request, project_uid):
     task_index = _get_valid_task(project_id=project_uid)
     total_task_number = _get_total_task_number(project_id=project_uid)
 
+
     if(task_index > INVALID):
+        ########################
+
+        service_name = 's3'
+        endpoint_url = 'https://kr.object.ncloudstorage.com'
+        region_name = 'kr-standard'
+        access_key = '0C863406F8D54433789F'
+        secret_key = 'CC66B33F3B1487B10DF50F82638B4065CD4723B0'
+        bucket_name='daig'
+        s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
+                        aws_secret_access_key=secret_key)
+        project=Project.objects.get(uid=project_uid)
+
+        url=s3.generate_presigned_url("get_object",Params={
+            'Bucket':bucket_name,
+            'Key':project.model_url
+        }, ExpiresIn=3600)
+        
+        task_uid = project.uid+str(task_index)
+
+        task=Task.objects.get(uid=task_uid)
+        data_url=task.data_url
+        label_url=task.label_url
+
+        if(task.uid == None):
+            return JsonResponse({
+            "is_successful":False,
+            "project_uid":project_uid,
+            "message":"Wrong task index"
+        })
+
+        data_url=s3.generate_presigned_url("get_object",Params={
+            'Bucket':bucket_name,
+            'Key':data_url
+        }, ExpiresIn=3600)
+
+        label_url=s3.generate_presigned_url("get_object",Params={
+            'Bucket':bucket_name,
+            'Key':label_url
+        }, ExpiresIn=3600)
+        
+        #######################
         return JsonResponse({
             "is_successful":True,
             "project_uid":project_uid,
             "task_index":task_index,
             "total_task":total_task_number,
-            "message":"Available task found"
+            "message":"Available task found",
+            "model_url":url,
+            "data_url":data_url,
+            "label_url":label_url
         })
     else:
         return JsonResponse({
@@ -336,8 +397,6 @@ def get_task_index(request, project_uid):
             "project_uid":project_uid,
             "message":"No available task"
         })
-
-    return None
 
 
 def start_project_task(request, project_uid):

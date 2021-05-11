@@ -27,9 +27,9 @@ class Project (models.Model):
 class Task (models.Model):
     uid = models.CharField(
         max_length=200, 
-        default=str(ObjectId()),
         primary_key=True
     )
+    index=models.TextField(null=True, blank=True)
     tasker=models.ForeignKey(get_user_model(), on_delete=models.CASCADE,null=True, blank=True)
     project=models.ForeignKey(Project, on_delete=models.CASCADE)
     data_url=models.TextField(null=True, blank=True)
