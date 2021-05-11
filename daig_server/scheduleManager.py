@@ -77,7 +77,7 @@ class scheduleManager:
 
     def get_valid_project(self):
         for project in self.project_list.keys():
-            if(self.project_list[project].get_task_index() > -1):
+            if(self.project_list[project].is_project_available()):
                 return self.project_list[project].id
         return -1
 

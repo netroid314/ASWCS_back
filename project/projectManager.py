@@ -123,9 +123,11 @@ class projectManager:
 
     def get_pariticipants_number(self):
         count = 0
-        for i in self.task_step_schedule:
-            if(self.task_step_schedule[i] == INPROGRESS):
+        for key in self.task_step_schedule:
+            print(key)
+            if(self.task_step_schedule[key] == INPROGRESS):
                 count += 1
+        print(self.task_step_schedule)
         return count
 
     ##################################################################
@@ -180,6 +182,9 @@ class projectManager:
 
     def is_step_done(self):
         return self.current_step_done_count == self.task_step_size
+
+    def is_project_available(self):
+        return not(self.is_max_contributor or self.is_project_finished())
 
     def task_time_limit_check(self, task_time):
         return (time.time() - task_time) > (self.time_threshold * 1.5)
