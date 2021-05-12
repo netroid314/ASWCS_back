@@ -101,9 +101,6 @@ def start_project(request, project_uid):
             "message":"Project does not exists"
         })
 
-    return None
-
-
 
 # 아래와 같은 형태로 data 받음
 # {
@@ -242,12 +239,6 @@ def get_project_weight(request, project_uid):
         _ = tf.seek(0)
         return HttpResponse(tf,content_type='application/file')
 
-    return JsonResponse({
-            "is_successful":False,
-            "project_uid":project_id,
-            "message":"Internal Error"
-        })
-
 
 def get_project_result(request, project_uid):
     if request.method!='GET':
@@ -293,9 +284,7 @@ def pause_project(request, project_uid):
             "project_uid":project_id,
             "message":"Project does not exists"
         })
-
-    return None
-
+        
 def get_project_progress(request, project_uid):
     return None
 
