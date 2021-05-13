@@ -1,9 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser,BaseUserManager,PermissionsMixin
 from django.db import models 
 from django.utils import timezone
-from uuid import uuid4
-from bson.objectid import ObjectId
-
 
 class UserManager(BaseUserManager):    
     
@@ -36,7 +33,6 @@ class User(AbstractBaseUser,PermissionsMixin):
     
     user_SN=models.CharField(
         max_length=200,
-        default=str(ObjectId()),
         editable=False,
         unique=True,
         primary_key=True
@@ -54,7 +50,6 @@ class User(AbstractBaseUser,PermissionsMixin):
 
     key = models.CharField(
         max_length=200,
-        default=str(uuid4()),
         unique=True
     )
 

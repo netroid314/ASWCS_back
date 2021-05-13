@@ -1,6 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from .models import User
+from bson.objectid import ObjectId
+from uuid import uuid4
+
 
 def login(request):
     if request.method!='POST':
@@ -49,7 +52,7 @@ def sign_up(request):
             "message":"Already existed username."
         })
     
-    user=User.objects.create(username=username)
+    user=User.objects.create(username=username,user_SN=str(ObjectId()),key=str(uuid4()))
     user.set_password(password)
     user.save()
 
