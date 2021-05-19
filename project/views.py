@@ -466,7 +466,7 @@ def update_project_task(request, project_uid):
 
         url=s3.generate_presigned_url("put_object",Params={
             'Bucket':bucket_name,
-            'Key':project.model_url
+            'Key':project.model_url+'_result'
         }, ExpiresIn=3600)
         
         with TemporaryFile() as tf:
