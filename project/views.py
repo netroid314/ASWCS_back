@@ -1,3 +1,4 @@
+from botocore.configprovider import SectionConfigProvider
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import get_user_model
@@ -5,6 +6,7 @@ from django.utils import timezone
 from .models import *
 import boto3
 import json
+import requests
 
 from tempfile import TemporaryFile
 
@@ -451,6 +453,27 @@ def update_project_task(request, project_uid):
         "message":"Gradient Update fail. expired index"
         })
 
+    if(_is_project_finished(project_id=project_uid)):
+        service_name = 's3'
+        endpoint_url = 'https://kr.object.ncloudstorage.com'
+        region_name = 'kr-standard'
+        access_key = '0C863406F8D54433789F'
+        secret_key = 'CC66B33F3B1487B10DF50F82638B4065CD4723B0'
+        bucket_name='daig'
+        s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
+                        aws_secret_access_key=secret_key)
+        project=Project.objects.get(uid=project_uid)
+
+        url=s3.generate_presigned_url("put_object",Params={
+            'Bucket':bucket_name,
+            'Key':project.model_url
+        }, ExpiresIn=3600)
+        
+        with TemporaryFile() as tf:
+            np.save(tf, np.array(_get_project_result(project_id=project_uid),dtype=object))
+            _ = tf.seek(0)
+            requests.put(url=url,data=tf)
+
     return JsonResponse({
         "is_successful":True,
         "message":"Gradient Updated Success"
@@ -478,12 +501,18 @@ def _get_valid_task(project_id):
 def _get_total_task_number(project_id):
     return schedule_manager.get_total_task_number(project_id=project_id)
 
+def _get_project_result(project_id):
+    return schedule_manager.get_project_result(project_id=project_id)
+
 def _start_task(project_id, task_id):
     schedule_manager.start_project_task(project_id=project_id, task_no=task_id)
 
 def _update_project(project_id, task_id, gradient, time):
     return schedule_manager.update_project(project_id=project_id, task_no=task_id, gradient=gradient, time = time)
     
+def _is_project_finished(project_id):
+    return schedule_manager.is_project_finished(project_id=project_id)
+
 def _load_projects_from_DB():
     return 1
     # gonna do this far later
