@@ -46,10 +46,9 @@ def create_project(request):
     step_size = int(step_size)
 
     status = 'STANDBY'
-    created_at = timezone.now()
 
     project = Project.objects.create(uid=uid,owner=user,
-        max_contributor=max_contributor,status=status,created_at=created_at)
+        max_contributor=max_contributor,status=status)
 
 
     numpy_file = request.FILES.get('weight', INVALID)
@@ -91,6 +90,10 @@ def start_project(request, project_uid):
     if(target_project.exists()):
         target_project.update(status='INPROGRESS')
         schedule_manager.start_project(project_uid)
+        project = Project.objects.get(uid=project_uid)
+        project.status = 'started'
+        project.started_at = timezone.now()
+        project.save()
         return JsonResponse({
             "is_successful":True,
             "project_uid":project_uid,
@@ -473,6 +476,11 @@ def update_project_task(request, project_uid):
             np.save(tf, np.array(_get_project_result(project_id=project_uid),dtype=object))
             _ = tf.seek(0)
             requests.put(url=url,data=tf)
+
+        project = Project.objects.get(uid=project_uid)
+        project.status = 'finished'
+        project.finished_at = timezone.now()
+        project.save()
 
     return JsonResponse({
         "is_successful":True,
