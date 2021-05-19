@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from .models import *
 from django.http import HttpResponse
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 
@@ -12,6 +12,29 @@ from credit.models import Order, OrderPayment
 
 User=get_user_model()
 
+def get_current_credit(request):
+    if request.method!='GET':
+        return JsonResponse({
+            "is_successful":False,
+            "message":"[ERROR] POST ONLY"
+        })
+
+    key = request.META.get('HTTP_AUTH')
+    if User.objects.filter(key=key).exists()==False:
+        return JsonResponse({
+            "is_successful":False,
+            "message":"Expired key. Please Login again."
+        })
+    user=User.objects.get(key=key)
+
+    return JsonResponse({
+        "id":user.username,
+        "credit":user.credit
+    })
+
+    
+    pass
+
 def get_credit_log(request):
     if request.method!='GET':
         return JsonResponse({
@@ -19,7 +42,7 @@ def get_credit_log(request):
             "message":"[ERROR] GET ONLY"
         })
 
-    key = request.META.get("HTTP_AUTH")['key']
+    key = request.META.get("HTTP_AUTH")
     user=User.objects.get(key=key)
 
     if user==None:

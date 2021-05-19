@@ -487,6 +487,32 @@ def update_project_task(request, project_uid):
         "message":"Gradient Updated Success"
     })
 
+def get_owned_projects(request):
+    if request.method!='GET':
+        return JsonResponse({
+            "is_successful":False,
+            "message":"[ERROR] GET ONLY"
+        })
+
+    key = request.META.get('HTTP_AUTH')
+    if User.objects.filter(key=key).exists()==False:
+        return JsonResponse({
+            "is_successful":False,
+            "message":"Expired key. Please Login again."
+        })
+    user=User.objects.get(key=key)
+    projects=Project.objects.filter(owner=user).all()
+    projects=[{
+        'project_uid':p.uid,
+        'progress':'미구현',
+        'status':p.status,
+        'created_at':str(p.created_at)
+    } for p in projects]
+    return JsonResponse({
+        'is_successful':True,
+        'projects':projects
+    })
+
 
 
 # Belows are not for http requests. Belows are blocks for them

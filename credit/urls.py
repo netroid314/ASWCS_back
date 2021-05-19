@@ -7,6 +7,7 @@ from . import views
 app_name = "credit"
 
 urlpatterns = [
+    path('remains/',get_current_credit),
     path('log',get_credit_log),
     url('admin/', admin.site.urls),
     path('', views.home, name='home'),
