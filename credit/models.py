@@ -22,6 +22,8 @@ class Order(models.Model):
         verbose_name = "주문"
         verbose_name_plural = "주문 목록"
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    userID = models.CharField('ID', max_length=20, null=False, unique=True)
     name = models.CharField('주문명', max_length=100)
     amount = models.PositiveIntegerField('금액')
 
@@ -33,12 +35,14 @@ class Order(models.Model):
     subaddr = models.CharField('구매자 주소 나머지', max_length=256, null=True, blank=True)
     postcode = models.CharField('구매자 우편번호', max_length=20, null=True, blank=True)
 
+    """
     PAY_STATUS_CHOCIES = (
         ('ready', '결제 대기'),
         ('confirmed', '결제 완료'),
         ('canceled', '결제 취소'),
     )
-    pay_status = models.CharField('결제 상태', max_length=30, default='ready', choices=PAY_STATUS_CHOCIES)
+    """
+    #pay_status = models.CharField('결제 상태', max_length=30, default='ready', choices=PAY_STATUS_CHOCIES)
 
     created_at = models.DateTimeField('생성일자', auto_now_add=True)
 
