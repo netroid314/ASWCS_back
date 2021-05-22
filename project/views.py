@@ -389,8 +389,7 @@ def get_task_index(request, project_uid):
         })
     else:
         return JsonResponse({
-            "is_successful":True,
-            "state":"empty",
+            "is_successful":False,
             "project_uid":project_uid,
             "message":"No available task"
         })

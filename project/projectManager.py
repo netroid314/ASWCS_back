@@ -182,7 +182,7 @@ class projectManager:
         return self.current_step_done_count == self.task_step_size
 
     def is_project_available(self):
-        return not(self.is_max_contributor() or self.is_project_finished())
+        return not(self.is_max_contributor() or self.is_project_finished() or (self.get_task_index() == -1))
 
     def task_time_limit_check(self, task_time):
         return (time.time() - task_time) > (self.time_threshold * 1.5)
