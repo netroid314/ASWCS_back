@@ -315,8 +315,7 @@ def get_available_project(request):
         })
     else:
         return JsonResponse({
-            "is_successful":True,
-            "state":"empty",
+            "is_successful":False,
             "message":"No Possible Project"
         })
 
