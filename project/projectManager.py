@@ -109,11 +109,33 @@ class projectManager:
                 return self.current_step * self.task_step_size + i
 
         for i in range(0, self.task_step_size):
-            if(self.task_step_schedule[i] == INPROGRESS and self.task_time_limit_check(self.task_step_time_stamp[i])):
+            if((self.task_step_schedule[i] == INPROGRESS) and (self.task_time_limit_check(self.task_step_time_stamp[i]))):
                 return self.current_step * self.task_step_size + i
 
         for i in range(0, self.task_step_size):
-            if(self.task_step_schedule[i] == CHECKED and self.task_time_limit_check(self.task_step_time_stamp[i])):
+            if((self.task_step_schedule[i] == CHECKED) and (self.task_time_limit_check(self.task_step_time_stamp[i]))):
+                return self.current_step * self.task_step_size + i 
+
+        return -1
+
+    def get_task_index_proto(self):
+        # Later, change for loop and if statement into filter based iteration
+        if(self.is_project_finished()):
+            return -1
+        
+        if(self.is_max_contributor()):
+            return -1
+            
+        for i in range(0, self.task_step_size):
+            if(self.task_step_schedule[i] == STANDBY):
+                return self.current_step * self.task_step_size + i
+
+        for i in range(0, self.task_step_size):
+            if((self.task_step_schedule[i] == INPROGRESS) and (self.task_time_limit_check(self.task_step_time_stamp[i]))):
+                return self.current_step * self.task_step_size + i
+
+        for i in range(0, self.task_step_size):
+            if((self.task_step_schedule[i] == CHECKED) and (self.task_time_limit_check(self.task_step_time_stamp[i]))):
                 return self.current_step * self.task_step_size + i 
 
         return -1
@@ -182,7 +204,7 @@ class projectManager:
         return self.current_step_done_count == self.task_step_size
 
     def is_project_available(self):
-        return not(self.is_max_contributor() or self.is_project_finished() or (self.get_task_index() == -1))
+        return not(self.is_max_contributor() or self.is_project_finished() or (self.get_task_index_proto() == -1))
 
     def task_time_limit_check(self, task_time):
         return (time.time() - task_time) > (self.time_threshold * 1.5)
