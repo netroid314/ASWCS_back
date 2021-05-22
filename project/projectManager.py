@@ -14,7 +14,7 @@ class projectManager:
     def __init__(self):
         self.id = 0
         self.finished = False
-        self.time_threshold = 1 * MINUTE
+        self.time_threshold = 10 * MINUTE
         self.max_contributor = 0
         self.status = 'STANDBY'
 
