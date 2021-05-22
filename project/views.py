@@ -309,12 +309,14 @@ def get_available_project(request):
     if(project_id != -1):
         return JsonResponse({
             "is_successful": True,
+            "state":"good",
             "project_uid": project_id,
             "message":"Possible Project Found"
         })
     else:
         return JsonResponse({
-            "is_successful":False,
+            "is_successful":True,
+            "state":"empty",
             "message":"No Possible Project"
         })
 
@@ -387,7 +389,8 @@ def get_task_index(request, project_uid):
         })
     else:
         return JsonResponse({
-            "is_successful":False,
+            "is_successful":True,
+            "state":"empty",
             "project_uid":project_uid,
             "message":"No available task"
         })
@@ -452,7 +455,8 @@ def update_project_task(request, project_uid):
     result = _update_project(project_id=project_uid,task_id=task_index,gradient=gradient, time = spent_time)
     if(result == INVALID):
         return JsonResponse({
-        "is_successful":False,
+        "is_successful":True,
+        "state":"expired",
         "message":"Gradient Update fail. expired index"
         })
 
@@ -469,7 +473,7 @@ def update_project_task(request, project_uid):
 
         url=s3.generate_presigned_url("put_object",Params={
             'Bucket':bucket_name,
-            'Key':project.model_url+'_result'
+            'Key':f'project/{project_uid}/model/result.npy'
         }, ExpiresIn=3600)
         
         with TemporaryFile() as tf:
