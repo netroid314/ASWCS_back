@@ -207,6 +207,9 @@ class projectManager:
         return not(self.is_max_contributor() or self.is_project_finished() or (self.get_task_index_proto() == -1))
 
     def task_time_limit_check(self, task_time):
+        print('-----------------------------------')
+        print(time.time(),task_time,self.time_threshold)
+        print(time.time()-task_time,self.time_threshold*1.5)
         return (time.time() - task_time) > (self.time_threshold * 1.5)
 
     def task_search_limit_check(self, task_time):

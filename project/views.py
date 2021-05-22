@@ -440,7 +440,6 @@ def update_project_task(request, project_uid):
     
     task_index = request.POST.get('task_index', INVALID)
     spent_time = float(request.POST.get('spent_time', '5'))
-    print('time is ',spent_time)
     numpy_file = request.FILES.get('gradient', INVALID)
 
     if ((task_index == INVALID) or (spent_time == INVALID) or (numpy_file == INVALID)):
