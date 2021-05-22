@@ -101,11 +101,12 @@ class projectManager:
         
         if(self.is_max_contributor()):
             return -1
-            
+
         for i in range(0, self.task_step_size):
             if(self.task_step_schedule[i] == STANDBY):
                 self.task_step_schedule[i] = CHECKED
                 self.task_step_time_stamp[i] = time.time()
+                print(self.task_step_time_stamp[i], self.time_threshold)
                 return self.current_step * self.task_step_size + i
 
         for i in range(0, self.task_step_size):
