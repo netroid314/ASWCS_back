@@ -6,10 +6,11 @@ from django.urls import reverse
 from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.apps import apps as django_apps
-
+from django.contrib.auth import get_user_model
 from payment.iamport_rest import IamportRest
 import json
 
+User=get_user_model()
 
 def get_payment_model():
     try:
@@ -33,8 +34,8 @@ def pay(request, payment_id):
         'buyer_email' : payment.buyer_email or '',
         'buyer_name' : payment.buyer_name or '',
         'buyer_tel' : payment.buyer_tel or '',
-        'buyer_addr' : payment.buyer_addr or '',
-        'buyer_postcode' : payment.buyer_postcode or '',
+        #'buyer_addr' : payment.buyer_addr or '',
+        #'buyer_postcode' : payment.buyer_postcode or '',
         'm_redirect_url' : reverse('payment:update', args=[payment.pk, ])
     })
 
@@ -48,11 +49,6 @@ def pay(request, payment_id):
         'payment': payment,
         'merchant_id': settings.PAYMENT_MERCHANT_ID
     })
-
-
-def jls_extract_def():
-    
-    return 
 
 
 def update(request, payment_id):
@@ -100,10 +96,12 @@ def update(request, payment_id):
 
 def result(request, payment_id):
     payment = get_object_or_404(get_payment_model(), pk=payment_id)
+    user = User.objects.get()
     
-    payment.credit += payment.amout
-    payment.save()
-    
+    if payment.pay_result == 'success':
+        user.credit += payment.amount
+        user.save()
+
     home_url = payment.get_home_url() or '/'
     retry_url = payment.get_retry_url()
 

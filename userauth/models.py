@@ -44,7 +44,7 @@ class User(AbstractBaseUser,PermissionsMixin):
         unique=True
     )
 
-    credit=models.IntegerField(
+    credit=models.PositiveIntegerField(
         default=0
     )
 

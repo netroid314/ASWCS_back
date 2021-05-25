@@ -16,8 +16,8 @@ class Payment(models.Model):
     buyer_email = models.EmailField('이메일', null=True, blank=True)
     buyer_name = models.CharField('구매자명', max_length=50, null=True, blank=True)
     buyer_tel = models.CharField('구매자 연락처', max_length=100)
-    buyer_addr = models.CharField('구매자 주소', max_length=256, null=True, blank=True)
-    buyer_postcode = models.CharField('구매자 우편번호', max_length=20, null=True, blank=True)
+    #buyer_addr = models.CharField('구매자 주소', max_length=256, null=True, blank=True)
+    #buyer_postcode = models.CharField('구매자 우편번호', max_length=20, null=True, blank=True)
 
     created_at = models.DateTimeField('생성일자', auto_now_add=True)
     updated_at = models.DateTimeField('갱신일자', auto_now=True)
