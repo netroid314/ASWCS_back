@@ -8,8 +8,8 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
-#from credit.forms import OrderForm
-#from credit.models import Order, OrderPayment
+from credit.forms import OrderForm
+from credit.models import Order, OrderPayment
 
 User=get_user_model()
 
@@ -68,15 +68,6 @@ def get_credit_log(request):
     })
 
 def home(request):
-
-    key = request.META.get("HTTP_AUTH")
-    user = User.objects.get(key=key)
-
-    if user==None:
-        return JsonResponse({
-            "is_successful":False,
-            "message":"Expired key. Please Login again."
-        })
     
     if request.method == 'POST':
         form = OrderForm(request.POST)
@@ -86,15 +77,24 @@ def home(request):
 
             return HttpResponseRedirect(reverse('payment:pay', args=[payment.pk]))
     else:
+        key = request.META.get("HTTP_AUTH")
+        user = User.objects.get()
+
+        if user==None:
+            return JsonResponse({
+            "is_successful":False,
+            "message":"Expired key. Please Login again."
+        })
+    
         form = OrderForm(initial={
             'userID' : user.username,
             'name': '크레딧 충전',
             'amount': 1000,
             'buyer': '홍길동',
-            'addr': '주소',
-            'subaddr': '상세주소',
-            'postcode': '123-456',
-            'email': 'iamport@siot.do',
+            #'addr': '주소',
+            #'subaddr': '상세 주소',
+            #'postcode': '우편번호',
+            'email': 'DAIG@ajou.ac.kr',
             'tel': '010-1234-5678'
         })
 
