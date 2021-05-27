@@ -1,8 +1,9 @@
-from daig_server.scheduleManager import INVALID
+from daig_server.scheduleManager
 import numpy as np
 import time
 import math
 
+INVALID = -1
 STANDBY = 0
 CHECKED = 1
 INPROGRESS = 2
