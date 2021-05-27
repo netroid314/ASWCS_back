@@ -1,3 +1,4 @@
+from daig_server.scheduleManager import INVALID
 import numpy as np
 import time
 import math
@@ -14,9 +15,12 @@ class projectManager:
     def __init__(self):
         self.id = 0
         self.finished = False
-        self.time_threshold = 10 * MINUTE
+        self.time_threshold = 999 * MINUTE
         self.max_contributor = 0
         self.status = 'STANDBY'
+
+        self.epoch = 0
+        self.batch_size = 0
 
         self.result_weight = np.array([])
         self.step_gradient = np.array([])
@@ -51,11 +55,14 @@ class projectManager:
     ###################################################################
     # Setting functions
 
-    def set_total_step(self, total_task, step_size):
+    def set_total_step(self, total_task, step_size, max_contributor = INVALID):
         self.task_total_count = total_task
         self.task_step_size = step_size
 
-        self.set_max_contiributor(math.ceil(step_size/2))
+        if(max_contributor == INVALID):
+            self.set_max_contiributor(math.ceil(step_size/2))
+        else:
+            self.set_max_contiributor(max_contributor)
 
         self.current_step = 0
         self.init_tok_step  = True
@@ -79,6 +86,10 @@ class projectManager:
     def set_current_step(self, step):
         self.current_step = step
         self.current_step_done_count = 0
+
+    def set_project_config(self, epoch, batch_size):
+        self.epoch = epoch
+        self.batch_size = batch_size
 
     def start_project(self):
         self.status = 'INPROGRESS'
@@ -150,6 +161,9 @@ class projectManager:
             if(self.task_step_schedule[key] == INPROGRESS):
                 count += 1
         return count
+
+    def get_progress(self):
+        return self.task_total_count, self.done_task_number
 
     ##################################################################
     # Update and Perform related functions

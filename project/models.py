@@ -1,3 +1,5 @@
+from math import trunc
+from botocore import model
 from django.db import models
 from django.contrib import admin
 from django.conf import settings
@@ -18,6 +20,13 @@ class Project (models.Model):
     created_at = models.DateTimeField('created_at',default=timezone.now())
     started_at=models.DateTimeField('started_at',null=True, blank=True)
     finished_at=models.DateTimeField('finished_at',null=True, blank=True)
+    max_step=models.IntegerField(null=True, blank=True)
+    step_size=models.IntegerField(null=True, blank=True)
+    current_step=models.IntegerField(null=True, blank=True)
+    epoch=models.IntegerField(null=True, blank=True)
+    batch_size=models.IntegerField(null=True, blank=True)
+    valid_rate=models.IntegerField(null=True, blank=True)
+    max_contributor=models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.uid

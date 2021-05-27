@@ -6,6 +6,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 from project.projectManager import projectManager
 
+INVALID = -1
 STANDBY = 0
 INPROGRESS = 1
 
@@ -25,15 +26,16 @@ class scheduleManager:
         self.project_list = {}
         self.project_user_match_list = {}
 
-    def init_project(self, project_id, total_step, step_size, weight):
+    def init_project(self, project_id, total_step, step_size, weight, epoch, batch_size, max_contributor = -1, saved_step = INVALID):
         if project_id in self.project_list:
             return -1
 
         new_project = projectManager()
         self.project_list[project_id] = new_project
         self.project_list[project_id].id = project_id
-        self.project_list[project_id].set_total_step(total_step,step_size)
+        self.project_list[project_id].set_total_step(total_step,step_size,max_contributor)
         self.project_list[project_id].set_weight(weight)
+        self.project_list[project_id].set_project_config(epoch = epoch, batch_size = batch_size)
         self.project_user_match_list[project_id] = []
 
         return 0
@@ -104,6 +106,9 @@ class scheduleManager:
 
     def get_available_users(self):
         return len(dict(filter(lambda user:user[1][0]==STANDBY,self.user_list.items())))
+
+    def get_project_progress(self, project_id):
+        return self.project_list[project_id].get_progress()
 
     ##################################################################
     # Belows are logicals

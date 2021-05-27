@@ -37,18 +37,26 @@ def create_project(request):
     user=User.objects.get(key=key)
 
     uid = str(ObjectId())
-    max_contributor = request.POST.get('max_contributor', 5)
-    epoch = request.POST.get('epoch', 5)
+    max_contributor = request.POST.get('max_contributor', '-1')
+    epoch = request.POST.get('epoch', '5')
+    batch_size = request.POST.get('batch_size', '5')
     total_task = request.POST.get('total_task', '15')
     step_size = request.POST.get('step_size', '5')
+    valid_rate = request.POST.get('valid_rate','0')
 
     total_task = int(total_task)
     step_size = int(step_size)
+    epoch = int(epoch)
+    batch_size = int(batch_size)
+    max_contributor = int(max_contributor)
+    valid_rate = int(valid_rate)
 
     status = 'STANDBY'
 
     project = Project.objects.create(uid=uid,owner=user,
-        max_contributor=max_contributor,status=status)
+        max_contributor=max_contributor,status=status, max_step = int(total_task/step_size),
+        step_size = step_size, epoch = epoch, batch_size = batch_size, valid_rate = valid_rate,
+         max_contributor=max_contributor)
 
 
     numpy_file = request.FILES.get('weight', INVALID)
@@ -61,7 +69,8 @@ def create_project(request):
 
     init_weight = np.load(request.FILES.get('weight'),allow_pickle = True)
 
-    schedule_manager.init_project(project_id=uid,total_step=total_task,step_size=step_size,weight=init_weight)
+    schedule_manager.init_project(project_id=uid,total_step=total_task,step_size=step_size,
+        weight=init_weight, epoch=epoch, batch_size = batch_size, max_contributor=max_contributor)
 
     return JsonResponse({
         "is_successful":True,
@@ -163,7 +172,7 @@ def get_data_url(request):
     return JsonResponse({
         "is_succesful":True,
         "data_url":data_url,
-        "label_url":label_url
+        "label_url":label_url,
     })
 
 # 아래와 같은 형태로 data 받음
@@ -347,6 +356,10 @@ def get_task_index(request, project_uid):
                         aws_secret_access_key=secret_key)
         project=Project.objects.get(uid=project_uid)
 
+        epoch = project.epoch
+        batch_size = project.batch_size
+        valid_rate = project.valid_rate
+
         url=s3.generate_presigned_url("get_object",Params={
             'Bucket':bucket_name,
             'Key':project.model_url
@@ -384,7 +397,10 @@ def get_task_index(request, project_uid):
             "message":"Available task found",
             "model_url":url,
             "data_url":data_url,
-            "label_url":label_url
+            "label_url":label_url,
+            "epoch": epoch,
+            "batch_size": batch_size,
+            "valid_rate": valid_rate
         })
     else:
         return JsonResponse({
@@ -550,6 +566,16 @@ def _is_project_finished(project_id):
     return schedule_manager.is_project_finished(project_id=project_id)
 
 def _load_projects_from_DB():
+    schedule_manager.reset()
+    project_list = Project.objects.all()
+
+    if(not(project_list.exists())):
+        return -1
+
+    for project in project_list:
+        schedule_manager.init_project(project_id=project.uid,total_step=project.max_step,
+            step_size=project.step_size)
+
     return 1
     # gonna do this far later
 
