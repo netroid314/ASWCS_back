@@ -263,7 +263,6 @@ def get_project_result(request, project_uid):
 
     if schedule_manager.is_project_finished(project_id = project_uid):
         project = Project.objects.get(uid=project_uid)
-        project.finished_at = timezone.now()
         with TemporaryFile() as tf:
             np.save(tf, schedule_manager.get_project_result(project_id=project_uid))
             _ = tf.seek(0)
