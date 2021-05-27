@@ -25,7 +25,7 @@ class Project (models.Model):
     current_step=models.IntegerField(null=True, blank=True)
     epoch=models.IntegerField(null=True, blank=True)
     batch_size=models.IntegerField(null=True, blank=True)
-    valid_rate=models.IntegerField(null=True, blank=True)
+    valid_rate=models.FloatField(null=True, blank=True)
     max_contributor=models.IntegerField(null=True, blank=True)
 
     def __str__(self):

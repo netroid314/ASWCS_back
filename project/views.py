@@ -49,7 +49,7 @@ def create_project(request):
     epoch = int(epoch)
     batch_size = int(batch_size)
     max_contributor = int(max_contributor)
-    valid_rate = int(valid_rate)
+    valid_rate = float(valid_rate)
 
     status = 'STANDBY'
 
