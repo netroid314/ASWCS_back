@@ -55,8 +55,7 @@ def create_project(request):
 
     project = Project.objects.create(uid=uid,owner=user,
         max_contributor=max_contributor,status=status, max_step = int(total_task/step_size),
-        step_size = step_size, epoch = epoch, batch_size = batch_size, valid_rate = valid_rate,
-         max_contributor=max_contributor)
+        step_size = step_size, epoch = epoch, batch_size = batch_size, valid_rate = valid_rate)
 
 
     numpy_file = request.FILES.get('weight', INVALID)
