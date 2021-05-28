@@ -16,7 +16,6 @@ class ProjectManagerTests(unittest.TestCase):
 
     def update_gradient(self, index, gradient):
         self.project_manager.update_gradient(index, gradient)
-        print('time out with at ' + str(index))
 
     def timed_update_gradient(self, index, gradient, timer):
         th.Timer(timer, (lambda lamda_index,lamda_gradient: self.update_gradient(lamda_index,lamda_gradient)),(index, gradient)).start()
@@ -76,8 +75,6 @@ class ProjectManagerTests(unittest.TestCase):
 
     def test_schdule_simulation_multiple(self):
         self.test_project_weight_initialization()
-        print('initiate triple task process without time variation')
-
         self.schdule_simulation_without_time_variation()
         self.schdule_simulation_without_time_variation()
         self.schdule_simulation_without_time_variation()
@@ -91,7 +88,6 @@ class ProjectManagerTests(unittest.TestCase):
         # user 1 also takes job of user 2 based on session time
         # user 1 did first ad second task and user 3 did third task.
         # user 2's job is abandoned
-        print('initiate triple task process with time variation')
         self.test_project_weight_initialization()
 
         self.user_1_index = self.project_manager.get_task_index()
