@@ -87,18 +87,17 @@ def home(request):
         })
     
         form = OrderForm(initial={
-            'userID' : user.username,
             'name': '크레딧 충전',
             'amount': 1000,
-            'buyer': '홍길동',
+            'buyer': user.username,
             #'addr': '주소',
             #'subaddr': '상세 주소',
             #'postcode': '우편번호',
             'email': 'DAIG@ajou.ac.kr',
-            'tel': '010-1234-5678'
+            #'tel': '010-1234-5678'
         })
 
-    return render(request, 'home.html', {'form': form})
+        return render(request, 'home.html', {'form': form})
 
 
 def retry_order(request, order_id):

@@ -1,3 +1,4 @@
+from datetime import date
 from django.core.exceptions import ImproperlyConfigured
 from django.http.response import Http404, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
@@ -8,6 +9,7 @@ from django.utils.safestring import mark_safe
 from django.apps import apps as django_apps
 from django.contrib.auth import get_user_model
 from payment.iamport_rest import IamportRest
+from credit.models import CreditLog
 import json
 
 User=get_user_model()
@@ -96,11 +98,17 @@ def update(request, payment_id):
 
 def result(request, payment_id):
     payment = get_object_or_404(get_payment_model(), pk=payment_id)
+    
+    key = request.META.get('HTTP_AUTH')
     user = User.objects.get()
     
     if payment.pay_result == 'success':
         user.credit += payment.amount
         user.save()
+        
+        credit_log=CreditLog.objects.create(user=user,
+        action='크레딧 충전', amount=payment.amount, date=timezone.now())
+        credit_log.save()
 
     home_url = payment.get_home_url() or '/'
     retry_url = payment.get_retry_url()
