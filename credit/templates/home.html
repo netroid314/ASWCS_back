@@ -3,15 +3,20 @@
 {% block content %}
 <div class="container">
 
-    <br /><h2 style="text-align: center;">DAIG 크레딧 충전</h2><br /><br />
+    <br /><h2 style="text-align: center;">크레딧 충전</h2><br /><br />
 
     <div class="center-block" style="width:300px;">
         <form method="POST">
             {% csrf_token %}
-            {{ form.as_p }}
-            <input type="submit" value="결제하기" />
-        </form>
+            <h5 style="text-align: center;">
+            {{ form.as_p }}  
+            </h5>
+            <h4 style="text-align: center;">
+            <br /><input type="submit" value="결제하기" />
+            </h4>
+       </form>
     </div>
 </div>
+
 
 {% endblock %}

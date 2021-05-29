@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.forms.widgets import HiddenInput
 from django.utils import timezone
 
 #iamport
@@ -22,9 +23,9 @@ class Order(models.Model):
         verbose_name = "주문"
         verbose_name_plural = "주문 목록"
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-    userID = models.CharField('ID', max_length=20, null=True)
-    userKey = models.CharField('Key', max_length=200, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    userID = models.CharField('ID', max_length=20)
+    userKey = models.CharField('Key', max_length=200)
     name = models.CharField('주문명', max_length=100)
     amount = models.PositiveIntegerField('금액')
 
@@ -100,7 +101,7 @@ class OrderPayment(Payment):
 
     # 결제 후 이동 할 Home URL
     def get_home_url(self):
-        return '/'
+        return '/credit/payment/'
     def pay_start(request):
         payment = OrderPayment.from_order(order_info)
         return HttpResponseRedirect(reverse('payment:pay', args=[payment.pk]))

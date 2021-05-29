@@ -79,7 +79,13 @@ def home(request):
             return HttpResponseRedirect(reverse('payment:pay', args=[payment.pk]))
     else:
         key = request.META.get("HTTP_AUTH")
-        print(key)
+
+        if key==None:
+            return JsonResponse({
+            "is_successful":False,
+            "message":"Expired key. Please Login again."
+        })
+
         user = User.objects.get(key=key)
         
         if user==None:
@@ -89,8 +95,6 @@ def home(request):
         })
 
         form = OrderForm(initial={
-            'user': user,
-            'userID': user.username,
             'userKey': key,
 
             'name': '크레딧 충전',
