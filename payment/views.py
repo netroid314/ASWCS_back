@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from django.core.exceptions import ImproperlyConfigured
 from django.http.response import Http404, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404

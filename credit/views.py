@@ -11,6 +11,9 @@ from django.urls import reverse
 from credit.forms import OrderForm
 from credit.models import Order, OrderPayment
 
+from django.utils.safestring import mark_safe
+import json
+
 User=get_user_model()
 
 def get_current_credit(request):
@@ -44,7 +47,7 @@ def get_credit_log(request):
         })
 
     key = request.META.get("HTTP_AUTH")
-    user=User.objects.get(key=key)
+    user=User.objects.get(username='111')
 
     if user==None:
         return JsonResponse({
@@ -58,14 +61,17 @@ def get_credit_log(request):
             "message":"CreditLog does not exist."
         })
 
-    log=CreditLog.objects.get(user=user)
+    
+    log_list=CreditLog.objects.filter(user=user)
+    print(log_list[0].date.date)
+    context=[]
 
-    return JsonResponse({
-            "action":log.action,
-            "details":log.details,
-            "amount":log.amount,
-            "date":log.date
-    })
+    for i in range(len(log_list)):
+        context.append({'action': log_list[i].action, 'amount': log_list[i].amount, 'date':log_list[i].date})
+    
+
+    return JsonResponse(context,safe=False)
+
 
 def home(request):
     
