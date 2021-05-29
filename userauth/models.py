@@ -44,6 +44,10 @@ class User(AbstractBaseUser,PermissionsMixin):
         unique=True
     )
 
+    email=models.EmailField(
+        max_length=254
+    )
+
     credit=models.PositiveIntegerField(
         default=0
     )

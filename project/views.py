@@ -1,3 +1,4 @@
+from datetime import time
 from botocore.configprovider import SectionConfigProvider
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
@@ -55,6 +56,7 @@ def create_project(request):
 
     project = Project.objects.create(uid=uid,owner=user,
         max_contributor=max_contributor,status=status, max_step = int(total_task/step_size),
+        created_at = timezone.now(),
         step_size = step_size, epoch = epoch, batch_size = batch_size, valid_rate = valid_rate)
 
 
@@ -262,7 +264,6 @@ def get_project_result(request, project_uid):
     if(authorization_result): return authorization_result
 
     if schedule_manager.is_project_finished(project_id = project_uid):
-        project = Project.objects.get(uid=project_uid)
         with TemporaryFile() as tf:
             np.save(tf, schedule_manager.get_project_result(project_id=project_uid))
             _ = tf.seek(0)
