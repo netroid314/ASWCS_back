@@ -74,19 +74,25 @@ def home(request):
         if form.is_valid():
             order = form.save()
             payment = OrderPayment.from_order(order)
-
+            print("POST USER KEY: ")
+            print(payment.order.userKey)
             return HttpResponseRedirect(reverse('payment:pay', args=[payment.pk]))
     else:
         key = request.META.get("HTTP_AUTH")
-        user = User.objects.get()
-
+        print(key)
+        user = User.objects.get(key=key)
+        
         if user==None:
             return JsonResponse({
             "is_successful":False,
             "message":"Expired key. Please Login again."
         })
-    
+
         form = OrderForm(initial={
+            'user': user,
+            'userID': user.username,
+            'userKey': key,
+
             'name': '크레딧 충전',
             'amount': 1000,
             'buyer': user.username,

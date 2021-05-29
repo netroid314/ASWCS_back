@@ -98,10 +98,8 @@ def update(request, payment_id):
 
 def result(request, payment_id):
     payment = get_object_or_404(get_payment_model(), pk=payment_id)
-    
-    key = request.META.get('HTTP_AUTH')
-    user = User.objects.get()
-    
+    userKey=payment.order.userKey
+    user = User.objects.get(key=userKey)
     if payment.pay_result == 'success':
         user.credit += payment.amount
         user.save()

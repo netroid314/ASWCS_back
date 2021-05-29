@@ -24,6 +24,7 @@ class Order(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     userID = models.CharField('ID', max_length=20, null=True)
+    userKey = models.CharField('Key', max_length=200, null=True)
     name = models.CharField('주문명', max_length=100)
     amount = models.PositiveIntegerField('금액')
 
