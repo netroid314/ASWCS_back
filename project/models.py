@@ -17,7 +17,7 @@ class Project (models.Model):
     max_contributor=models.IntegerField(null=True, blank=True)
     model_url=models.TextField(null=True, blank=True)
     status=models.CharField(max_length=20,default="not_started")
-    created_at = models.DateTimeField('created_at',default=timezone.now())
+    created_at = models.DateTimeField('created_at')
     started_at=models.DateTimeField('started_at',null=True, blank=True)
     finished_at=models.DateTimeField('finished_at',null=True, blank=True)
     max_step=models.IntegerField(null=True, blank=True)
