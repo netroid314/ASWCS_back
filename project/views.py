@@ -101,7 +101,9 @@ def start_project(request, project_uid):
         target_project.update(status='INPROGRESS')
         schedule_manager.start_project(project_uid)
         project = Project.objects.get(uid=project_uid)
-        project.update(status = 'started', started_at = timezone.now())
+        project.status = 'started'
+        project.started_at = timezone.now()
+        project.save()
 
         return JsonResponse({
             "is_successful":True,
@@ -155,10 +157,10 @@ def get_data_url(request):
 
     task=Task.objects.create(uid=(project.uid+str(index)), project=project)
 
-    task.update(
-        data_url = f'project/{project_uid}/task/{task.uid}/{data}',
-        label_url = f'project/{project_uid}/task/{task.uid}/{label}'
-    )
+    task.data_url=f'project/{project_uid}/task/{task.uid}/{data}'
+    task.label_url=f'project/{project_uid}/task/{task.uid}/{label}'
+
+    task.save()
 
     data_url=s3.generate_presigned_url("put_object",Params={
         'Bucket':bucket_name,
@@ -209,8 +211,8 @@ def get_model_url(request):
     bucket_name='daig'
 
     project=Project.objects.get(uid=project_uid)
-    project.update(model_url = f'project/{project_uid}/model/{model}')
-
+    project.model_url=f'project/{project_uid}/model/{model}'
+    project.save()
     url=s3.generate_presigned_url("put_object",Params={
         'Bucket':bucket_name,
         'Key':project.model_url
@@ -512,7 +514,10 @@ def update_project_task(request, project_uid):
             _ = tf.seek(0)
             requests.put(url=url,data=tf)
 
-        project.update(status = 'finished', finished_at = timezone.now())
+        project = Project.objects.get(uid=project_uid)
+        project.status = 'finished'
+        project.finished_at = timezone.now()
+        project.save()
 
     task = Task.objects.get(uid = project.uid+str(task_index))
     task.update(status = 'finished', finished_at = timezone.now())

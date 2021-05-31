@@ -162,7 +162,7 @@ class projectManager:
         return count
 
     def get_progress(self):
-        return self.task_total_count, self.done_task_number
+        return f'{self.done_task_number}/{self.task_total_count}'
 
     ##################################################################
     # Update and Perform related functions
