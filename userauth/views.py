@@ -1,9 +1,15 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
+from django.core.mail import EmailMessage
 from .models import User
 from bson.objectid import ObjectId
 from uuid import uuid4
+import random
+import string
+import threading
 
+email_code={}
+timer={}
 
 def login(request):
     if request.method!='POST':
@@ -62,8 +68,85 @@ def sign_up(request):
         "message":"Successfully signed up."
     })
 
+def del_code(email):
+    saved_code=email_code.get(email)
+    if saved_code!=None:
+        del email_code[email]
+    
 
+def send_email(request):
+    email=request.POST.get('email',None)
+    if email==None:
+        return JsonResponse({
+            "is_successful":False,
+            "message":"No email detected."
+        })
+    
+    if User.objects.filter(email=email).exists():
+        return JsonResponse({
+            "is_successful":False,
+            "message":"Already existed email."
+        })
 
+    code = ''
+    for r in range(7):
+        code += random.choice(string.ascii_letters)
+    
+    message_title = 'DAIG Service Verification Email'
+    message_context = f'Verification code: \n\n{code}'
+
+    message=EmailMessage(
+        message_title,
+        message_context,
+        to=[email]
+    )
+
+    if message.send():
+        if timer.get(email)!=None:
+            timer[email].cancel()
+            del timer[email]
+        email_code[email]=code
+        timer[email]=threading.Timer(600,del_code,(email,))
+        timer[email].start()
+        return JsonResponse({
+            "is_successful":True,
+            "message":"Check Email"
+        })
+    else:
+        return JsonResponse({
+            "is_successful":False,
+            "message":"Sending Email Error"
+        })
+
+def verify_code(request):
+    email=request.POST.get('email',None)
+    code=request.POST.get('code',None)
+    if email==None or code==None:
+        return JsonResponse({
+            "is_successful":False,
+            "message":"Input Error"
+        })
+
+    saved_code=email_code.get(email)
+    if saved_code==None:
+        return JsonResponse({
+            "is_successful":False,
+            "message":"Invalid Email"
+        })
+
+    if saved_code==code:
+        del email_code[email]
+        timer[email].cancel()
+        del timer[email]
+        return JsonResponse({
+            "is_successful":True,
+            "message":"Successfully verified email"
+        })
+    else:
+        return JsonResponse({
+            "is_successful":False,
+            "message":"Check verification code"
+        })
 
 
 # Create your views here.
