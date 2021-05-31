@@ -50,7 +50,7 @@ def get_credit_log(request):
         })
 
     key = request.META.get("HTTP_AUTH")
-    user=User.objects.get(username='111')
+    user=User.objects.get(key=key)
 
     if user==None:
         return JsonResponse({

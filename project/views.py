@@ -1,6 +1,6 @@
 from datetime import time
 from botocore.configprovider import SectionConfigProvider
-from django.shortcuts import render
+from django.shortcuts import render, resolve_url
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -278,10 +278,32 @@ def get_project_result(request, project_uid):
     if(authorization_result): return authorization_result
 
     if schedule_manager.is_project_finished(project_id = project_uid):
-        with TemporaryFile() as tf:
-            np.save(tf, schedule_manager.get_project_result(project_id=project_uid))
-            _ = tf.seek(0)
-            return HttpResponse(tf,content_type='application/file')
+        service_name = 's3'
+        endpoint_url = 'https://kr.object.ncloudstorage.com'
+        region_name = 'kr-standard'
+        access_key = '0C863406F8D54433789F'
+        secret_key = 'CC66B33F3B1487B10DF50F82638B4065CD4723B0'
+        bucket_name='daig'
+        s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
+                        aws_secret_access_key=secret_key)
+
+        project = Project.objects.get(uid = project_uid)
+
+        model_url=s3.generate_presigned_url("get_object",Params={
+            'Bucket':bucket_name,
+            'Key':project.model_url
+        }, ExpiresIn=3600)
+
+        result_url=s3.generate_presigned_url("get_object",Params={
+            'Bucket':bucket_name,
+            'Key':project.result_url
+        }, ExpiresIn=3600)
+    
+        return JsonResponse({
+            "is_successful": True,
+            "model_url": model_url,
+            "result_url": result_url
+        })
 
     return HttpResponse(status = '270')
 
