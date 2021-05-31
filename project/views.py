@@ -101,9 +101,8 @@ def start_project(request, project_uid):
         target_project.update(status='INPROGRESS')
         schedule_manager.start_project(project_uid)
         project = Project.objects.get(uid=project_uid)
-        project.status = 'started'
-        project.started_at = timezone.now()
-        project.save()
+        project.update(status = 'started', started_at = timezone.now())
+
         return JsonResponse({
             "is_successful":True,
             "project_uid":project_uid,
@@ -155,10 +154,11 @@ def get_data_url(request):
     project=Project.objects.get(uid=project_uid)
 
     task=Task.objects.create(uid=(project.uid+str(index)), project=project)
-    task.data_url=f'project/{project_uid}/task/{task.uid}/{data}'
-    task.label_url=f'project/{project_uid}/task/{task.uid}/{label}'
 
-    task.save()
+    task.update(
+        data_url = f'project/{project_uid}/task/{task.uid}/{data}',
+        label_url = f'project/{project_uid}/task/{task.uid}/{label}'
+    )
 
     data_url=s3.generate_presigned_url("put_object",Params={
         'Bucket':bucket_name,
@@ -209,8 +209,7 @@ def get_model_url(request):
     bucket_name='daig'
 
     project=Project.objects.get(uid=project_uid)
-    project.model_url=f'project/{project_uid}/model/{model}'
-    project.save()
+    project.update(model_url = f'project/{project_uid}/model/{model}')
 
     url=s3.generate_presigned_url("put_object",Params={
         'Bucket':bucket_name,
@@ -254,6 +253,19 @@ def get_project_weight(request, project_uid):
         _ = tf.seek(0)
         return HttpResponse(tf,content_type='application/file')
 
+
+def is_project_finished(request, project_uid):
+    if request.method!='GET':
+        return HttpResponse(status = '270')
+
+    key = request.META.get('HTTP_AUTH')
+    authorization_result = check_authorization(key)
+    if(authorization_result): return authorization_result
+
+    if schedule_manager.is_project_finished(project_id = project_uid):
+        return HttpResponse(status = '200')
+
+    return HttpResponse(status = '270')
 
 def get_project_result(request, project_uid):
     if request.method!='GET':
@@ -433,6 +445,8 @@ def start_project_task(request, project_uid):
 
     if(task_index != INVALID):
         _start_task(project_id=project_uid, task_id=task_index)
+        task = Task.objects.get(uid = project_uid + str(task_index))
+        task.update(status = 'started', started_at = timezone.now())
         return JsonResponse({
             "is_successful":True,
             "message":"Proejct task occupied"
@@ -484,11 +498,13 @@ def update_project_task(request, project_uid):
         bucket_name='daig'
         s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
                         aws_secret_access_key=secret_key)
+
         project=Project.objects.get(uid=project_uid)
+        project.update(result_url = f'project/{project_uid}/model/result.npy')
 
         url=s3.generate_presigned_url("put_object",Params={
             'Bucket':bucket_name,
-            'Key':f'project/{project_uid}/model/result.npy'
+            'Key':project.result_url
         }, ExpiresIn=3600)
         
         with TemporaryFile() as tf:
@@ -496,10 +512,10 @@ def update_project_task(request, project_uid):
             _ = tf.seek(0)
             requests.put(url=url,data=tf)
 
-        project = Project.objects.get(uid=project_uid)
-        project.status = 'finished'
-        project.finished_at = timezone.now()
-        project.save()
+        project.update(status = 'finished', finished_at = timezone.now())
+
+    task = Task.objects.get(uid = project.uid+str(task_index))
+    task.update(status = 'finished', finished_at = timezone.now())
 
     return JsonResponse({
         "is_successful":True,
@@ -521,15 +537,17 @@ def get_owned_projects(request):
         })
     user=User.objects.get(key=key)
     projects=Project.objects.filter(owner=user).all()
-    projects=[{
+
+    projects_json=[{
         'project_uid':p.uid,
-        'progress':'미구현',
+        'progress':schedule_manager.get_project_progress(p.uid),
         'status':p.status,
         'created_at':str(p.created_at)
     } for p in projects]
+
     return JsonResponse({
         'is_successful':True,
-        'projects':projects
+        'projects':projects_json
     })
 
 
