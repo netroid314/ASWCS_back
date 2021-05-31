@@ -3,7 +3,8 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from .models import *
 from django.http import HttpResponse
-
+from django.utils import timezone
+from datetime import datetime
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -40,6 +41,8 @@ def get_current_credit(request):
     pass
 
 def get_credit_log(request):
+    
+    
     if request.method!='GET':
         return JsonResponse({
             "is_successful":False,
@@ -47,7 +50,7 @@ def get_credit_log(request):
         })
 
     key = request.META.get("HTTP_AUTH")
-    user=User.objects.get(username='111')
+    user=User.objects.get(key=key)
 
     if user==None:
         return JsonResponse({
@@ -62,12 +65,12 @@ def get_credit_log(request):
         })
 
     
+    
     log_list=CreditLog.objects.filter(user=user)
-    print(log_list[0].date.date)
     context=[]
 
     for i in range(len(log_list)):
-        context.append({'action': log_list[i].action, 'amount': log_list[i].amount, 'date':log_list[i].date})
+        context.append({'action': log_list[i].action,'details': log_list[i].details, 'amount': log_list[i].amount, 'date':log_list[i].date})
     
 
     return JsonResponse(context,safe=False)
@@ -84,6 +87,7 @@ def home(request):
             print(payment.order.userKey)
             return HttpResponseRedirect(reverse('payment:pay', args=[payment.pk]))
     else:
+        
         key = request.META.get("HTTP_AUTH")
 
         if key==None:
@@ -91,7 +95,7 @@ def home(request):
             "is_successful":False,
             "message":"Expired key. Please Login again."
         })
-
+        
         user = User.objects.get(key=key)
         
         if user==None:

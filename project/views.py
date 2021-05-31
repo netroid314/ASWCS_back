@@ -334,8 +334,8 @@ def pause_project(request, project_uid):
             "message":"Project does not exists"
         })
         
-def get_project_progress(request, project_uid):
-    return None
+# def get_project_progress(request, project_uid):
+#     return None
 
 def get_available_project(request):
     if request.method!='GET':

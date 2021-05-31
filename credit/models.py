@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.forms.widgets import HiddenInput
@@ -15,7 +16,7 @@ class CreditLog(models.Model):
     action=models.CharField(max_length=10,null=True, blank=True)
     details=models.TextField(null=True, blank=True)
     amount=models.IntegerField(null=True, blank=True)
-    date=models.DateTimeField(default=timezone.now())
+    date=models.CharField(max_length=30,null=True, blank=True)
 
 # 쇼핑몰 내부적으로 사용할 주문 모델
 class Order(models.Model):

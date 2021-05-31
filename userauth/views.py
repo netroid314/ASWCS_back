@@ -51,6 +51,7 @@ def sign_up(request):
     
     username = request.POST.get('username', None)
     password = request.POST.get('password', None)
+    email = request.POST.get('email', None)
 
     if User.objects.filter(username=username).exists():
         return JsonResponse({
@@ -58,7 +59,7 @@ def sign_up(request):
             "message":"Already existed username."
         })
     
-    user=User.objects.create(username=username,user_SN=str(ObjectId()),key=str(uuid4()))
+    user=User.objects.create(username=username,user_SN=str(ObjectId()),key=str(uuid4()), email=email)
     user.set_password(password)
     user.save()
 
@@ -110,7 +111,7 @@ def send_email(request):
         timer[email].start()
         return JsonResponse({
             "is_successful":True,
-            "message":"Check Email"
+            "message":"Sent Email"
         })
     else:
         return JsonResponse({
@@ -148,5 +149,18 @@ def verify_code(request):
             "message":"Check verification code"
         })
 
+
+def check_username(request):
+    username=request.POST.get('username',None)
+    if User.objects.filter(username=username).exists():
+        return JsonResponse({
+            "is_successful":False,
+            "message":"Already existed ID"
+        })
+    else:
+        return JsonResponse({
+            "is_successful":True,
+            "message":"Available ID"
+        })
 
 # Create your views here.

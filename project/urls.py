@@ -11,7 +11,6 @@ urlpatterns = [
     path('<str:project_uid>/finished',is_project_finished),
     path('<str:project_uid>/result',get_project_result),
     path('<str:project_uid>/pause/',pause_project),
-    path('progress',get_project_progress),
 
     path('<str:project_uid>/project/weight',get_project_weight),
     path('get/project',get_available_project),
