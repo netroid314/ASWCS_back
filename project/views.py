@@ -66,7 +66,6 @@ def create_project(request):
         step_size = step_size, epoch = epoch, batch_size = batch_size, valid_rate = valid_rate,
         credit = credit)
 
-
     numpy_file = request.FILES.get('weight', INVALID)
 
     if(numpy_file == INVALID):
@@ -623,7 +622,7 @@ def _calculate_credit(parameter_number, epoch, batch_size, total_task):
     batch_convt = math.log2(batch_size)
     epoch_convt = epoch/10
 
-    credit = (2**param_convt) * min(batch_convt-3,1) * epoch_convt * 10
+    credit = (2**param_convt) * max(batch_convt-3,1) * epoch_convt * 10
     credit = credit/total_task
 
     return credit
