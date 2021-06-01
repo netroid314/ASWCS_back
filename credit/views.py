@@ -89,7 +89,7 @@ def home(request):
     else:
         
         key = request.META.get("HTTP_AUTH")
-
+        
         if key==None:
             return JsonResponse({
             "is_successful":False,
@@ -97,7 +97,7 @@ def home(request):
         })
         
         user = User.objects.get(key=key)
-        
+
         if user==None:
             return JsonResponse({
             "is_successful":False,
@@ -108,12 +108,12 @@ def home(request):
             'userKey': key,
 
             'name': '크레딧 충전',
-            'amount': 1000,
+            'amount': 0,
             'buyer': user.username,
             #'addr': '주소',
             #'subaddr': '상세 주소',
             #'postcode': '우편번호',
-            'email': 'DAIG@ajou.ac.kr',
+            'email': 'jwj0320@ajou.ac.kr',
             #'tel': '010-1234-5678'
         })
 
