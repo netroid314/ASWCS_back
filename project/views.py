@@ -1,6 +1,7 @@
 from datetime import time
+import math
 from botocore.configprovider import SectionConfigProvider
-from django.shortcuts import render
+from django.shortcuts import render, resolve_url
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -44,6 +45,7 @@ def create_project(request):
     total_task = request.POST.get('total_task', '15')
     step_size = request.POST.get('step_size', '5')
     valid_rate = request.POST.get('valid_rate','0')
+    parameter_number = request.POST.get('parameter_number','0')
 
     total_task = int(total_task)
     step_size = int(step_size)
@@ -51,14 +53,18 @@ def create_project(request):
     batch_size = int(batch_size)
     max_contributor = int(max_contributor)
     valid_rate = float(valid_rate)
+    parameter_number = int(parameter_number)
+
+    credit = _calculate_credit(parameter_number=parameter_number,epoch=epoch,
+        batch_size=batch_size, total_task=total_task)
 
     status = 'STANDBY'
 
     project = Project.objects.create(uid=uid,owner=user,
         max_contributor=max_contributor,status=status, max_step = int(total_task/step_size),
         created_at = timezone.now(),
-        step_size = step_size, epoch = epoch, batch_size = batch_size, valid_rate = valid_rate)
-
+        step_size = step_size, epoch = epoch, batch_size = batch_size, valid_rate = valid_rate,
+        credit = credit)
 
     numpy_file = request.FILES.get('weight', INVALID)
 
@@ -71,7 +77,7 @@ def create_project(request):
     init_weight = np.load(request.FILES.get('weight'),allow_pickle = True)
 
     schedule_manager.init_project(project_id=uid,total_step=total_task,step_size=step_size,
-        weight=init_weight, epoch=epoch, batch_size = batch_size, max_contributor=max_contributor)
+        weight=init_weight, epoch=epoch, batch_size = batch_size, max_contributor=max_contributor, credit=credit)
 
     return JsonResponse({
         "is_successful":True,
@@ -101,7 +107,9 @@ def start_project(request, project_uid):
         target_project.update(status='INPROGRESS')
         schedule_manager.start_project(project_uid)
         project = Project.objects.get(uid=project_uid)
-        project.update(status = 'started', started_at = timezone.now())
+        project.status = 'started'
+        project.started_at = timezone.now()
+        project.save()
 
         return JsonResponse({
             "is_successful":True,
@@ -153,12 +161,12 @@ def get_data_url(request):
 
     project=Project.objects.get(uid=project_uid)
 
-    task=Task.objects.create(uid=(project.uid+str(index)), project=project)
+    task=Task.objects.create(uid=(project.uid+str(index)), credit = project.credit, project=project)
 
-    task.update(
-        data_url = f'project/{project_uid}/task/{task.uid}/{data}',
-        label_url = f'project/{project_uid}/task/{task.uid}/{label}'
-    )
+    task.data_url=f'project/{project_uid}/task/{task.uid}/{data}'
+    task.label_url=f'project/{project_uid}/task/{task.uid}/{label}'
+
+    task.save()
 
     data_url=s3.generate_presigned_url("put_object",Params={
         'Bucket':bucket_name,
@@ -209,8 +217,8 @@ def get_model_url(request):
     bucket_name='daig'
 
     project=Project.objects.get(uid=project_uid)
-    project.update(model_url = f'project/{project_uid}/model/{model}')
-
+    project.model_url=f'project/{project_uid}/model/{model}'
+    project.save()
     url=s3.generate_presigned_url("put_object",Params={
         'Bucket':bucket_name,
         'Key':project.model_url
@@ -276,10 +284,32 @@ def get_project_result(request, project_uid):
     if(authorization_result): return authorization_result
 
     if schedule_manager.is_project_finished(project_id = project_uid):
-        with TemporaryFile() as tf:
-            np.save(tf, schedule_manager.get_project_result(project_id=project_uid))
-            _ = tf.seek(0)
-            return HttpResponse(tf,content_type='application/file')
+        service_name = 's3'
+        endpoint_url = 'https://kr.object.ncloudstorage.com'
+        region_name = 'kr-standard'
+        access_key = '0C863406F8D54433789F'
+        secret_key = 'CC66B33F3B1487B10DF50F82638B4065CD4723B0'
+        bucket_name='daig'
+        s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
+                        aws_secret_access_key=secret_key)
+
+        project = Project.objects.get(uid = project_uid)
+
+        model_url=s3.generate_presigned_url("get_object",Params={
+            'Bucket':bucket_name,
+            'Key':project.model_url
+        }, ExpiresIn=3600)
+
+        result_url=s3.generate_presigned_url("get_object",Params={
+            'Bucket':bucket_name,
+            'Key':project.result_url
+        }, ExpiresIn=3600)
+    
+        return JsonResponse({
+            "is_successful": True,
+            "model_url": model_url,
+            "result_url": result_url
+        })
 
     return HttpResponse(status = '270')
 
@@ -512,7 +542,10 @@ def update_project_task(request, project_uid):
             _ = tf.seek(0)
             requests.put(url=url,data=tf)
 
-        project.update(status = 'finished', finished_at = timezone.now())
+        project = Project.objects.get(uid=project_uid)
+        project.status = 'finished'
+        project.finished_at = timezone.now()
+        project.save()
 
     task = Task.objects.get(uid = project.uid+str(task_index))
     task.update(status = 'finished', finished_at = timezone.now())
@@ -583,6 +616,16 @@ def _update_project(project_id, task_id, gradient, time):
     
 def _is_project_finished(project_id):
     return schedule_manager.is_project_finished(project_id=project_id)
+
+def _calculate_credit(parameter_number, epoch, batch_size, total_task):
+    param_convt = math.log10(parameter_number)
+    batch_convt = math.log2(batch_size)
+    epoch_convt = epoch/10
+
+    credit = (2**param_convt) * max(batch_convt-3,1) * epoch_convt * 10
+    credit = credit/total_task
+
+    return credit
 
 def _load_projects_from_DB():
     schedule_manager.reset()

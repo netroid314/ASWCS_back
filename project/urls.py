@@ -2,6 +2,9 @@ from django.contrib import admin
 from django.urls import path, include
 from .views import *
 
+# def trigger_error(request):
+#     division_by_zero = 1 / 0
+
 urlpatterns = [
     path('create/',create_project),
     path('data/upload',get_data_url),
@@ -17,4 +20,6 @@ urlpatterns = [
     path('<str:project_uid>/task/get',get_task_index),
     path('<str:project_uid>/task/start/',start_project_task),
     path('<str:project_uid>/task/update/',update_project_task),
+
+    # path('sentry-debug/', trigger_error)
 ]

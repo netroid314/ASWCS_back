@@ -113,7 +113,7 @@ def home(request):
             #'addr': '주소',
             #'subaddr': '상세 주소',
             #'postcode': '우편번호',
-            'email': 'jwj0320@ajou.ac.kr',
+            'email': user.email,
             #'tel': '010-1234-5678'
         })
 
