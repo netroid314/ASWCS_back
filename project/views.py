@@ -1,4 +1,5 @@
 from datetime import time
+import math
 from botocore.configprovider import SectionConfigProvider
 from django.shortcuts import render, resolve_url
 from django.http import HttpResponse, JsonResponse
@@ -44,6 +45,7 @@ def create_project(request):
     total_task = request.POST.get('total_task', '15')
     step_size = request.POST.get('step_size', '5')
     valid_rate = request.POST.get('valid_rate','0')
+    parameter_number = request.POST.get('parameter_number','0')
 
     total_task = int(total_task)
     step_size = int(step_size)
@@ -51,13 +53,18 @@ def create_project(request):
     batch_size = int(batch_size)
     max_contributor = int(max_contributor)
     valid_rate = float(valid_rate)
+    parameter_number = int(parameter_number)
+
+    credit = _calculate_credit(parameter_number=parameter_number,epoch=epoch,
+        batch_size=batch_size, total_task=total_task)
 
     status = 'STANDBY'
 
     project = Project.objects.create(uid=uid,owner=user,
         max_contributor=max_contributor,status=status, max_step = int(total_task/step_size),
         created_at = timezone.now(),
-        step_size = step_size, epoch = epoch, batch_size = batch_size, valid_rate = valid_rate)
+        step_size = step_size, epoch = epoch, batch_size = batch_size, valid_rate = valid_rate,
+        credit = credit)
 
 
     numpy_file = request.FILES.get('weight', INVALID)
@@ -71,7 +78,7 @@ def create_project(request):
     init_weight = np.load(request.FILES.get('weight'),allow_pickle = True)
 
     schedule_manager.init_project(project_id=uid,total_step=total_task,step_size=step_size,
-        weight=init_weight, epoch=epoch, batch_size = batch_size, max_contributor=max_contributor)
+        weight=init_weight, epoch=epoch, batch_size = batch_size, max_contributor=max_contributor, credit=credit)
 
     return JsonResponse({
         "is_successful":True,
@@ -155,7 +162,7 @@ def get_data_url(request):
 
     project=Project.objects.get(uid=project_uid)
 
-    task=Task.objects.create(uid=(project.uid+str(index)), project=project)
+    task=Task.objects.create(uid=(project.uid+str(index)), credit = project.credit, project=project)
 
     task.data_url=f'project/{project_uid}/task/{task.uid}/{data}'
     task.label_url=f'project/{project_uid}/task/{task.uid}/{label}'
@@ -610,6 +617,16 @@ def _update_project(project_id, task_id, gradient, time):
     
 def _is_project_finished(project_id):
     return schedule_manager.is_project_finished(project_id=project_id)
+
+def _calculate_credit(parameter_number, epoch, batch_size, total_task):
+    param_convt = math.log10(parameter_number)
+    batch_convt = math.log2(batch_size)
+    epoch_convt = epoch/10
+
+    credit = (2**param_convt) * min(batch_convt-3,1) * epoch_convt * 10
+    credit = credit/total_task
+
+    return credit
 
 def _load_projects_from_DB():
     schedule_manager.reset()

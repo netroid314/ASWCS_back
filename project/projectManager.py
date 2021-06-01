@@ -52,6 +52,8 @@ class projectManager:
         self.model_url = ""
         self.data_url = ""
 
+        self.credit = 0
+
     ###################################################################
     # Setting functions
 
