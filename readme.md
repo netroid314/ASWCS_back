@@ -32,3 +32,8 @@ Use port number 8000 for default setting.
 ## One way to treat numpy file via https
 ## How K-batch sync SGD is established
 However, DAIG also focused on balance among Resource providers. so, it may not be pure K-batch sync SGD. (depends on situation)
+
+
+### Caution!
+this project has been developed by korean developers. So, there are some korean comments.
+And this is server program so please also check https://github.com/netroid314/ASWCS_front.
