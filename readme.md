@@ -24,6 +24,10 @@ So, its final result is also contorlled by Learning requestor.
 # How to use DAIG?
 This is server program. so, you should better check "https://github.com/netroid314/ASWCS_front"
 
+# How to launch server?
+Use manage.py for Django server launch. One exmaple is 'python manage.py runserver 0.0.0.0:8000'.
+Use port number 8000 for default setting.
+
 # Some points of DAIG server
 ## One way to treat numpy file via https
 ## How K-batch sync SGD is established
