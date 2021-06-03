@@ -20,9 +20,9 @@ class ProjectManagerTests(unittest.TestCase):
         tmp_init_weight = [np.random.rand(9)/10, np.random.rand(9)/10]
         tmp_init_weight = np.array(tmp_init_weight, dtype=object) 
 
-        self.schedule_manager.init_project('100352',12,3,tmp_init_weight)
+        self.schedule_manager.init_project('100352',12,3,tmp_init_weight, epoch = 10, batch_size = 32)
 
-        self.assertEqual(self.schedule_manager.init_project('100352',30,6,tmp_init_weight), -1)
+        self.assertEqual(self.schedule_manager.init_project('100352',30,6,tmp_init_weight, epoch = 10, batch_size = 32), -1)
 
     def test_initialization_new_users(self):
         self.test_initialization_new_project()
@@ -60,14 +60,14 @@ class ProjectManagerTests(unittest.TestCase):
         tmp_gradient_2 = self.get_random_gradient()
         tmp_gradient_3 = self.get_random_gradient()
 
-        self.schedule_manager.update_project(new_project,new_task_1,tmp_gradient_1)
+        self.schedule_manager.update_project(new_project,new_task_1,tmp_gradient_1,10)
         self.schedule_manager.deallocate_user('100001')
-        self.schedule_manager.update_project(new_project,new_task_2,tmp_gradient_2)
+        self.schedule_manager.update_project(new_project,new_task_2,tmp_gradient_2,10)
         self.schedule_manager.deallocate_user('100002')
-        self.schedule_manager.update_project(new_project,new_task_3,tmp_gradient_3)
+        self.schedule_manager.update_project(new_project,new_task_3,tmp_gradient_3,10)
         self.schedule_manager.deallocate_user('100003')
 
-        self.assertEqual(self.schedule_manager.project_list[new_project].get_task_index(), 3)
+        self.assertEqual(self.schedule_manager.project_list[new_project].get_task_index(), 2)
         self.assertEqual(self.schedule_manager.get_available_users(), 3)
 
 # execute unit test

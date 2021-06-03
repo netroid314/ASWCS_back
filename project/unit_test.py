@@ -33,9 +33,9 @@ class ProjectManagerTests(unittest.TestCase):
         self.test_poject_step_initialization()
         tmp_weight = [np.random.rand(9)/10, np.random.rand(9)/10]
         tmp_weight = np.array(tmp_weight, dtype=object)
-        self.project_manager.set_gardient(tmp_weight)
+        self.project_manager.set_weight(tmp_weight)
 
-        self.assertEqual(np.array_equal(self.project_manager.result_gradient, tmp_weight), True)
+        self.assertEqual(np.array_equal(self.project_manager.result_weight, tmp_weight), True)
 
     def test_user_task_init(self):
         self.test_project_weight_initialization()
@@ -49,7 +49,7 @@ class ProjectManagerTests(unittest.TestCase):
         self.user_3_index = self.project_manager.get_task_index()
         self.project_manager.start_task(self.user_3_index)
 
-        self.assertEqual(self.project_manager.task_step_schedule[2], 1)
+        self.assertEqual(self.project_manager.task_step_schedule[2], 0)
 
     def schdule_simulation_without_time_variation(self):
         tmp_weight_1 = self.get_random_gradient()
