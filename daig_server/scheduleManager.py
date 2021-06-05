@@ -41,6 +41,9 @@ class scheduleManager:
 
         return 0
 
+    def restore_project(self,project_id,saved_step):
+        self.project_list[project_id].restore(saved_step)
+
     def reset(self):
         self.user_list = {}
         self.project_list = {}
@@ -110,6 +113,9 @@ class scheduleManager:
 
     def get_project_progress(self, project_id):
         return self.project_list[project_id].get_progress()
+
+    def get_current_step(self, project_id):
+        return self.project_list[project_id].get_step()
 
     ##################################################################
     # Belows are logicals

@@ -6,6 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from .models import *
+from ..credit.models import *
 import boto3
 import json
 import requests
@@ -21,6 +22,8 @@ from manage import schedule_manager
 
 User = get_user_model()
 INVALID = -1
+
+BUCKET_NAME = 'DAIG'
 
 def create_project(request):
     if request.method!='POST':
@@ -101,15 +104,15 @@ def start_project(request, project_uid):
             "message":"Expired key. Please Login again."
         })
     
-    target_project = Project.objects.filter(uid = project_uid)
+    project = Project.objects.get(uid=project_uid)
 
-    if(target_project.exists()):
-        target_project.update(status='INPROGRESS')
-        schedule_manager.start_project(project_uid)
-        project = Project.objects.get(uid=project_uid)
+    if(project.exists()):
+        project.status='INPROGRESS'
         project.status = 'started'
         project.started_at = timezone.now()
         project.save()
+
+        schedule_manager.start_project(project_uid)
 
         return JsonResponse({
             "is_successful":True,
@@ -144,20 +147,12 @@ def get_data_url(request):
             "message":"Expired key. Please Login again."
         })
 
-    service_name = 's3'
-    endpoint_url = 'https://kr.object.ncloudstorage.com'
-    region_name = 'kr-standard'
-    access_key = '0C863406F8D54433789F'
-    secret_key = 'CC66B33F3B1487B10DF50F82638B4065CD4723B0'
-
-    s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
-                      aws_secret_access_key=secret_key)
+    s3 = _get_boto3()
 
     data = request.POST.get('data', '')
     label = request.POST.get('label', '')
     index = request.POST.get('index', '')
     project_uid = request.POST.get('project_uid', '')
-    bucket_name='daig'
 
     project=Project.objects.get(uid=project_uid)
 
@@ -169,12 +164,12 @@ def get_data_url(request):
     task.save()
 
     data_url=s3.generate_presigned_url("put_object",Params={
-        'Bucket':bucket_name,
+        'Bucket':BUCKET_NAME,
         'Key':task.data_url
     }, ExpiresIn=3600)
 
     label_url=s3.generate_presigned_url("put_object",Params={
-        'Bucket':bucket_name,
+        'Bucket':BUCKET_NAME,
         'Key':task.label_url
     }, ExpiresIn=3600)
     
@@ -203,24 +198,16 @@ def get_model_url(request):
             "message":"Expired key. Please Login again."
         })
 
-    service_name = 's3'
-    endpoint_url = 'https://kr.object.ncloudstorage.com'
-    region_name = 'kr-standard'
-    access_key = '0C863406F8D54433789F'
-    secret_key = 'CC66B33F3B1487B10DF50F82638B4065CD4723B0'
-
-    s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
-                      aws_secret_access_key=secret_key)
+    s3 = _get_boto3()
 
     model = request.POST.get('model', '')
     project_uid = request.POST.get('project_uid', '')
-    bucket_name='daig'
 
     project=Project.objects.get(uid=project_uid)
     project.model_url=f'project/{project_uid}/model/{model}'
     project.save()
     url=s3.generate_presigned_url("put_object",Params={
-        'Bucket':bucket_name,
+        'Bucket':BUCKET_NAME,
         'Key':project.model_url
     }, ExpiresIn=3600)
 
@@ -284,24 +271,17 @@ def get_project_result(request, project_uid):
     if(authorization_result): return authorization_result
 
     if schedule_manager.is_project_finished(project_id = project_uid):
-        service_name = 's3'
-        endpoint_url = 'https://kr.object.ncloudstorage.com'
-        region_name = 'kr-standard'
-        access_key = '0C863406F8D54433789F'
-        secret_key = 'CC66B33F3B1487B10DF50F82638B4065CD4723B0'
-        bucket_name='daig'
-        s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
-                        aws_secret_access_key=secret_key)
+        s3 = _get_boto3()
 
         project = Project.objects.get(uid = project_uid)
 
         model_url=s3.generate_presigned_url("get_object",Params={
-            'Bucket':bucket_name,
+            'Bucket':BUCKET_NAME,
             'Key':project.model_url
         }, ExpiresIn=3600)
 
         result_url=s3.generate_presigned_url("get_object",Params={
-            'Bucket':bucket_name,
+            'Bucket':BUCKET_NAME,
             'Key':project.result_url
         }, ExpiresIn=3600)
     
@@ -328,7 +308,8 @@ def pause_project(request, project_uid):
     target_project =  Project.objects.filter(uid = project_id)
 
     if(target_project.exists()):
-        target_project.update(status='STANDBY')
+        target_project.status='STANDBY'
+        target_project.save()
         schedule_manager.pause_project(project_id)
         return JsonResponse({
             "is_successful":True,
@@ -388,15 +369,8 @@ def get_task_index(request, project_uid):
 
     if(task_index > INVALID):
         ########################
+        s3 = _get_boto3()
 
-        service_name = 's3'
-        endpoint_url = 'https://kr.object.ncloudstorage.com'
-        region_name = 'kr-standard'
-        access_key = '0C863406F8D54433789F'
-        secret_key = 'CC66B33F3B1487B10DF50F82638B4065CD4723B0'
-        bucket_name='daig'
-        s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
-                        aws_secret_access_key=secret_key)
         project=Project.objects.get(uid=project_uid)
 
         epoch = project.epoch
@@ -404,15 +378,14 @@ def get_task_index(request, project_uid):
         valid_rate = project.valid_rate
 
         url=s3.generate_presigned_url("get_object",Params={
-            'Bucket':bucket_name,
+            'Bucket':BUCKET_NAME,
             'Key':project.model_url
         }, ExpiresIn=3600)
-        
-        task_uid = project.uid+str(task_index)
 
-        task=Task.objects.get(uid=task_uid)
+        task=Task.objects.get(uid=project.uid+str(task_index))
         data_url=task.data_url
         label_url=task.label_url
+        task.save()
 
         if(task.uid == None):
             return JsonResponse({
@@ -422,12 +395,12 @@ def get_task_index(request, project_uid):
         })
 
         data_url=s3.generate_presigned_url("get_object",Params={
-            'Bucket':bucket_name,
+            'Bucket':BUCKET_NAME,
             'Key':data_url
         }, ExpiresIn=3600)
 
         label_url=s3.generate_presigned_url("get_object",Params={
-            'Bucket':bucket_name,
+            'Bucket':BUCKET_NAME,
             'Key':label_url
         }, ExpiresIn=3600)
         
@@ -476,7 +449,10 @@ def start_project_task(request, project_uid):
     if(task_index != INVALID):
         _start_task(project_id=project_uid, task_id=task_index)
         task = Task.objects.get(uid = project_uid + str(task_index))
-        task.update(status = 'started', started_at = timezone.now())
+        task.status = 'started'
+        task.started_at = timezone.now()
+        task.save()
+
         return JsonResponse({
             "is_successful":True,
             "message":"Proejct task occupied"
@@ -509,6 +485,8 @@ def update_project_task(request, project_uid):
             "message":"INVALID params detected"
         })
 
+    credit_amout = Project.objects.get(uid=project_uid).credit
+
     gradient = np.load(numpy_file,allow_pickle = True)
 
     result = _update_project(project_id=project_uid,task_id=task_index,gradient=gradient, time = spent_time)
@@ -519,21 +497,32 @@ def update_project_task(request, project_uid):
         "message":"Gradient Update fail. expired index"
         })
 
-    if(_is_project_finished(project_id=project_uid)):
-        service_name = 's3'
-        endpoint_url = 'https://kr.object.ncloudstorage.com'
-        region_name = 'kr-standard'
-        access_key = '0C863406F8D54433789F'
-        secret_key = 'CC66B33F3B1487B10DF50F82638B4065CD4723B0'
-        bucket_name='daig'
-        s3 = boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
-                        aws_secret_access_key=secret_key)
+    if(result == 0):
+        s3 = _get_boto3()
 
         project=Project.objects.get(uid=project_uid)
-        project.update(result_url = f'project/{project_uid}/model/result.npy')
+        project.save_url = f'project/{project_uid}/model/save.npy'
+        project.current_step = schedule_manager.get_current_step(project_id=project_uid)
+        project.save()
 
         url=s3.generate_presigned_url("put_object",Params={
-            'Bucket':bucket_name,
+            'Bucket':BUCKET_NAME,
+            'Key':project.save_url
+        }, ExpiresIn=3600)
+
+        with TemporaryFile() as tf:
+            np.save(tf, np.array(_get_project_result(project_id=project_uid),dtype=object))
+            _ = tf.seek(0)
+            requests.put(url=url,data=tf)
+
+    if(_is_project_finished(project_id=project_uid)):
+        s3 = _get_boto3()
+
+        project=Project.objects.get(uid=project_uid)
+        project.result_url = f'project/{project_uid}/model/result.npy'
+
+        url=s3.generate_presigned_url("put_object",Params={
+            'Bucket':BUCKET_NAME,
             'Key':project.result_url
         }, ExpiresIn=3600)
         
@@ -542,13 +531,21 @@ def update_project_task(request, project_uid):
             _ = tf.seek(0)
             requests.put(url=url,data=tf)
 
-        project = Project.objects.get(uid=project_uid)
-        project.status = 'finished'
+        project.status = 'FINISHED'
         project.finished_at = timezone.now()
-        project.save()
+
+    project.save()
 
     task = Task.objects.get(uid = project.uid+str(task_index))
-    task.update(status = 'finished', finished_at = timezone.now())
+    task.status = 'finised'
+    task.inished_at = timezone.now()
+    task.save()
+
+    if(not create_credit_log(case=2,userKey=key,amount=credit_amout)):
+        return JsonResponse({
+            "is_successful":True,
+            "message":"Gradient Updated Success but Credit error occured :("
+        })
 
     return JsonResponse({
         "is_successful":True,
@@ -596,6 +593,39 @@ def check_authorization(authorization_key):
     else:
         return False
 
+
+def create_credit_log(case, userKey, amount):
+    
+    user = User.objects.get(key=userKey)
+
+    if (case==1):
+        details = '크레딧 충전'
+        action='+'
+        user.credit += amount
+
+    elif(case==2):
+        details = '자원 제공'
+        action='+'
+        user.credit += amount
+
+    elif(case==3):
+        details = '프로젝트 비용'
+        action='-'
+        user.credit -= amount
+
+    else:
+        return False
+    
+    user.save()
+
+    credit_log=CreditLog.objects.create(user=user,
+    action=action , details=details, amount=amount,
+    date= timezone.localtime(timezone.now()).strftime('%Y-%m-%d'))
+    credit_log.save()
+
+    return True
+
+
 def _get_valid_project():
     return schedule_manager.get_valid_project()
 
@@ -629,16 +659,24 @@ def _calculate_credit(parameter_number, epoch, batch_size, total_task):
 
 def _load_projects_from_DB():
     schedule_manager.reset()
-    project_list = Project.objects.all()
+    project_list = Project.objects.filter(status = 'INPROGRESS')
 
     if(not(project_list.exists())):
         return -1
 
     for project in project_list:
-        schedule_manager.init_project(project_id=project.uid,total_step=project.max_step,
+        schedule_manager.init_project(project_id=project.uid, total_step=project.max_step,
             step_size=project.step_size)
+        schedule_manager.restore(project_id=project.uid, saved_step = project.current_step)
 
     return 1
     # gonna do this far later
 
+def _get_boto3():
+    service_name = 's3'
+    endpoint_url = 'https://kr.object.ncloudstorage.com'
+    access_key = '0C863406F8D54433789F'
+    secret_key = 'CC66B33F3B1487B10DF50F82638B4065CD4723B0'
 
+    return boto3.client(service_name, endpoint_url=endpoint_url, aws_access_key_id=access_key,
+                      aws_secret_access_key=secret_key)

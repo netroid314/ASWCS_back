@@ -54,6 +54,9 @@ class projectManager:
 
         self.credit = 0
 
+    def restore(self, saved_step):
+        self.current_step = saved_step
+
     ###################################################################
     # Setting functions
 
@@ -191,14 +194,23 @@ class projectManager:
             print("project id: ",self.id,' # Task abandoned: Duplicated approach at ' + str(task_number))
             return -1
 
-        self.step_gradient += gradient
+        if(self.step_gradient.shape != gradient.shape):
+            print("Gradient Shape is NOT EQUAL")
+            return -1
+        
+        try:
+            self.step_gradient += gradient
+        except:
+            print("Someone tried to harm DAIG!!!")
+            return -1
+
         self.current_step_done_count += 1
 
         if(self.is_new_shortest_time(time)): self.time_threshold = time
 
         self.task_step_schedule[task_number % self.task_step_size] = DONE
         self.done_task_number += 1
-        print("project id: ",self.id," # gradient updated at ",task_number)
+        print("project id: ",self.id,"\n # gradient updated at ",task_number)
         if(self.is_step_done()):
             for key in self.task_step_schedule:
                 self.task_step_schedule[key] = STANDBY

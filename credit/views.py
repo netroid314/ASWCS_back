@@ -75,37 +75,6 @@ def get_credit_log(request):
 
     return JsonResponse(context,safe=False)
 
-def create_credit_log(case, userKey, amount):
-    
-    user = User.objects.get(key=userKey)
-
-    if (case==1):
-        details = '크레딧 충전'
-        action='+'
-        user.credit += amount
-
-    elif(case==2):
-        details = '리소스 공유'
-        action='+'
-        user.credit += amount
-
-    elif(case==3):
-        details = '프로젝트 비용'
-        action='-'
-        user.credit -= amount
-
-    else:
-        return False
-    
-    user.save()
-
-    credit_log=CreditLog.objects.create(user=user,
-    action=action , details=details, amount=amount,
-    date= timezone.localtime(timezone.now()).strftime('%Y-%m-%d'))
-    credit_log.save()
-
-    return True
-
 def home(request):
     
     if request.method == 'POST':
