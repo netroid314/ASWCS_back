@@ -79,7 +79,7 @@ def create_project(request):
 
     init_weight = np.load(request.FILES.get('weight'),allow_pickle = True)
 
-    schedule_manager.init_project(project_id=uid,total_step=total_task,step_size=step_size,
+    schedule_manager.init_project(project_id=uid,total_task=total_task,step_size=step_size,
         weight=init_weight, epoch=epoch, batch_size = batch_size, max_contributor=max_contributor, credit=credit)
 
     return JsonResponse({
@@ -497,13 +497,13 @@ def update_project_task(request, project_uid):
         "message":"Gradient Update fail. expired index"
         })
 
+    project=Project.objects.get(uid=project_uid)
+
     if(result == 0):
         s3 = _get_boto3()
 
-        project=Project.objects.get(uid=project_uid)
         project.save_url = f'project/{project_uid}/model/save.npy'
         project.current_step = schedule_manager.get_current_step(project_id=project_uid)
-        project.save()
 
         url=s3.generate_presigned_url("put_object",Params={
             'Bucket':BUCKET_NAME,
@@ -518,7 +518,6 @@ def update_project_task(request, project_uid):
     if(_is_project_finished(project_id=project_uid)):
         s3 = _get_boto3()
 
-        project=Project.objects.get(uid=project_uid)
         project.result_url = f'project/{project_uid}/model/result.npy'
 
         url=s3.generate_presigned_url("put_object",Params={
@@ -665,9 +664,11 @@ def _load_projects_from_DB():
         return -1
 
     for project in project_list:
-        schedule_manager.init_project(project_id=project.uid, total_step=project.max_step,
-            step_size=project.step_size)
-        schedule_manager.restore(project_id=project.uid, saved_step = project.current_step)
+        schedule_manager.init_project(project_id=project.uid, total_task=project.max_step*project.step_size,
+        step_size=project.step_size, weight=project.init_weight, epoch=project.epoch,
+        batch_size = project.batch_size, max_contributor = project.max_contributor, credit = project.credit)
+        if(project.current_step > 0):
+            schedule_manager.restore(project_id=project.uid, saved_step = project.current_step)
 
     return 1
     # gonna do this far later

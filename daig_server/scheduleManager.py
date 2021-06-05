@@ -26,7 +26,7 @@ class scheduleManager:
         self.project_list = {}
         self.project_user_match_list = {}
 
-    def init_project(self, project_id, total_step, step_size, weight, epoch, batch_size, max_contributor = -1, credit = 0, saved_step = INVALID):
+    def init_project(self, project_id, total_task, step_size, weight, epoch, batch_size, max_contributor = -1, credit = 0, saved_step = INVALID):
         if project_id in self.project_list:
             return -1
 
@@ -34,7 +34,7 @@ class scheduleManager:
         self.project_list[project_id] = new_project
         self.project_list[project_id].credit = credit
         self.project_list[project_id].id = project_id
-        self.project_list[project_id].set_total_step(total_step,step_size,max_contributor)
+        self.project_list[project_id].set_total_step(total_task,step_size,max_contributor)
         self.project_list[project_id].set_weight(weight)
         self.project_list[project_id].set_project_config(epoch = epoch, batch_size = batch_size)
         self.project_user_match_list[project_id] = []
