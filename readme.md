@@ -1,4 +1,4 @@
-# Rpository Info
+# Repository Info
 this is respository of DAIG (Distributed A.I Grid) project client program.
 it is based on PyQT5 because we use tensorflow for model training and others.
 - - -
