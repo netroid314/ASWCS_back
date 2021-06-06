@@ -19,6 +19,17 @@ Learning requestor can download trained model at anytime.
 ![image](https://user-images.githubusercontent.com/22979031/120693675-47bba700-c4e4-11eb-94b6-f079a1ae0f46.png)
 ![image2](https://user-images.githubusercontent.com/22979031/120912837-895b7600-c6cd-11eb-93a9-890f489ed992.PNG)
 - - -
+# DAIG server dependency
+|Name|version|usage|
+|------|---|---|
+|Django|3.1.7|for server development|
+|boto3|1.17.67|for object storage|
+|numpy|1.19.5|for data manipulation|
+|requests|2.25.1|for http communication|
+|h5py|3.1.0|for model saving|
+|iamport||for pay procedure|
+
+- - -
 # How DAIG's distribution works?
 We constructed DAIG distribution and result gathering system based on K-batch sync SGD.
 And it gathers trained gradients based on all-reduce method.
@@ -29,8 +40,8 @@ So, its final result is also contorlled by Learning requestor.
 This is server program. so, you should better check "https://github.com/netroid314/ASWCS_front"
 - - -
 # How to launch server?
-First, you need to install python libraries which are 'Django, Numpy, requests, boto3, iamport'.
-You can also use requirement file.
+First, you need to install python libraries which are listed above.
+Or you can use requirement file.
 Then use manage.py for Django server launch. One exmaple is 
 ```python manage.py runserver 0.0.0.0:8000```
 Refer Django reference book for more detail
