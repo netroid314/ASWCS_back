@@ -29,7 +29,8 @@ So, its final result is also contorlled by Learning requestor.
 This is server program. so, you should better check "https://github.com/netroid314/ASWCS_front"
 - - -
 # How to launch server?
-First, you need to install python libraries which are 'Django, Numpy, requests, boto3, iamport'
+First, you need to install python libraries which are 'Django, Numpy, requests, boto3, iamport'.
+You can also use requirement file.
 Then use manage.py for Django server launch. One exmaple is 
 ```python manage.py runserver 0.0.0.0:8000```
 Refer Django reference book for more detail
