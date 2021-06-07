@@ -1,3 +1,4 @@
+from credit.views import create_credit_log
 from datetime import date, datetime, time
 from django.core.exceptions import ImproperlyConfigured
 from django.http.response import Http404, HttpResponseRedirect
@@ -102,12 +103,7 @@ def result(request, payment_id):
     userKey=payment.order.userKey
     user = User.objects.get(key=userKey)
     if payment.pay_result == 'success':
-        user.credit += payment.amount
-        user.save()
-        
-        credit_log=CreditLog.objects.create(user=user,
-        action='+',details='크레딧 충전', amount=payment.amount, date= timezone.localtime(timezone.now()).strftime('%Y-%m-%d'))
-        credit_log.save()
+        create_credit_log(1,userKey,payment.amount)
 
     home_url = payment.get_home_url() or '/'
     retry_url = payment.get_retry_url()

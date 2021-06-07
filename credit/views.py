@@ -140,10 +140,10 @@ def home(request):
             'name': '크레딧 충전',
             'amount': 0,
             'buyer': user.username,
+            'email': user.email,
             #'addr': '주소',
             #'subaddr': '상세 주소',
             #'postcode': '우편번호',
-            'email': user.email,
             #'tel': '010-1234-5678'
         })
 
