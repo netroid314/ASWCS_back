@@ -16,6 +16,7 @@ class Project (models.Model):
     owner=models.ForeignKey(get_user_model(), on_delete=models.CASCADE, null=True, blank=True)
     max_contributor=models.IntegerField(null=True, blank=True)
     model_url=models.TextField(null=True, blank=True)
+    save_url=models.TextField(null=True, blank=True)
     result_url=models.TextField(null=True, blank=True)
     status=models.CharField(max_length=20,default="not_started")
     created_at = models.DateTimeField('created_at')

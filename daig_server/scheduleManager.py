@@ -26,7 +26,7 @@ class scheduleManager:
         self.project_list = {}
         self.project_user_match_list = {}
 
-    def init_project(self, project_id, total_step, step_size, weight, epoch, batch_size, max_contributor = -1, credit = 0, saved_step = INVALID):
+    def init_project(self, project_id, total_task, step_size, weight, epoch, batch_size, max_contributor = -1, credit = 0, saved_step = INVALID):
         if project_id in self.project_list:
             return -1
 
@@ -34,12 +34,15 @@ class scheduleManager:
         self.project_list[project_id] = new_project
         self.project_list[project_id].credit = credit
         self.project_list[project_id].id = project_id
-        self.project_list[project_id].set_total_step(total_step,step_size,max_contributor)
+        self.project_list[project_id].set_total_step(total_task,step_size,max_contributor)
         self.project_list[project_id].set_weight(weight)
         self.project_list[project_id].set_project_config(epoch = epoch, batch_size = batch_size)
         self.project_user_match_list[project_id] = []
 
         return 0
+
+    def restore_project(self,project_id,saved_step):
+        self.project_list[project_id].restore(saved_step)
 
     def reset(self):
         self.user_list = {}
@@ -110,6 +113,9 @@ class scheduleManager:
 
     def get_project_progress(self, project_id):
         return self.project_list[project_id].get_progress()
+
+    def get_current_step(self, project_id):
+        return self.project_list[project_id].get_step()
 
     ##################################################################
     # Belows are logicals
